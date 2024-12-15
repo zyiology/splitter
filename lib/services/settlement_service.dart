@@ -5,7 +5,7 @@ import '../models/transaction.dart';
 import '../models/currency_rate.dart';
 
 class SettlementService {
-  final List<Transaction> transactions;
+  final List<SplitterTransaction> transactions;
   final List<String> participants;
   final Map<String, double> currencyRates;
 
