@@ -37,7 +37,7 @@ class _ManageCurrencyRatesScreenState extends State<ManageCurrencyRatesScreen> {
                 onSubmitted: (value) {
                   double? rate = double.tryParse(value);
                   if (rate != null) {
-                    appState.setCurrencyRate(currency.symbol, rate);
+                    appState.updateCurrencyRate(currency.id!, rate);
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Invalid rate for ${currency.symbol}')),
@@ -101,7 +101,7 @@ class _ManageCurrencyRatesScreenState extends State<ManageCurrencyRatesScreen> {
                 }
 
                 Provider.of<AppState>(context, listen: false)
-                    .setCurrencyRate(symbol, rate);
+                    .addCurrencyRate(symbol, rate);
                 Navigator.pop(context);
               },
             ),

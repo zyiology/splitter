@@ -99,25 +99,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     SizedBox(height: 20),
                     ElevatedButton(
                       child: Text('Add Transaction'),
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          _formKey.currentState!.save();
-                          if (_selectedPayees.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Select at least one payee.')),
-                            );
-                            return;
-                          }
-                          Transaction transaction = Transaction(
-                            amount: _amount!,
-                            payer: _payer!,
-                            payees: _selectedPayees,
-                            currency: _currency!,
-                          );
-                          appState.addTransaction(transaction);
-                          Navigator.pop(context);
-                        }
-                      },
+                      onPressed: _addTransactionHandler,
                     ),
                   ],
                 ),
@@ -127,4 +109,59 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   }
 
   String capitalize(String s) => s[0].toUpperCase() + s.substring(1);
+
+
+  Future<void> _addTransactionHandler() async {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      if (_selectedPayees.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Select at least one payee.')),
+        );
+        return;
+      }
+
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(child: CircularProgressIndicator()),
+      );
+
+      final appState = Provider.of<AppState>(context, listen: false);
+      final transaction = SplitterTransaction(
+        amount: _amount!,
+        payer: _payer!,
+        payees: _selectedPayees,
+        currency: _currency!,
+      );
+
+      // Change homescreen to also show transactions instead of settlements
+      appState.toggleView();
+
+      try {
+        final transactionId = await appState.addTransaction(transaction);
+        // Optionally, you can use the transactionId for further actions
+
+        // Pop loading indicator
+        Navigator.of(context, rootNavigator: true).pop();
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Transaction added successfully!')),
+        );
+
+        // Pop the AddTransactionScreen
+        Navigator.pop(context);
+      } catch (error) {
+        // Pop loading indicator
+        Navigator.of(context, rootNavigator: true).pop();
+
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${error.toString()}')),
+        );
+      }
+    }
+  }
 }

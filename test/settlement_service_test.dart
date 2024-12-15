@@ -5,14 +5,14 @@ import 'package:splitter/services/settlement_service.dart';
 
 void main() {
   test('Settlement calculation test', () {
-    List<Transaction> transactions = [
-      Transaction(
+    List<SplitterTransaction> transactions = [
+      SplitterTransaction(
         amount: 100.0,
         payer: 'alice',
         payees: ['bob', 'charlie'],
         currency: 'USD',
       ),
-      Transaction(
+      SplitterTransaction(
         amount: 150.0,
         payer: 'bob',
         payees: ['alice'],
