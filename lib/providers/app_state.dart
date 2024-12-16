@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import '../models/currency_rate.dart';
+import "../models/transaction_group.dart";
 import '../services/settlement_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -16,6 +17,9 @@ class AppState extends ChangeNotifier {
   User? user;
   bool isLoading = true;
 
+  List<SplitterTransactionGroup> transactionGroups = [];
+  // String currentTransactionGroup!.id = '';
+  SplitterTransactionGroup? _currentTransactionGroup;
   List<String> participants = [];
   List<CurrencyRate> currencyRates = [];
   List<SplitterTransaction> transactions = [];
@@ -27,6 +31,14 @@ class AppState extends ChangeNotifier {
     _initialize();
   }
 
+  void updateCurrentTransactionGroup(SplitterTransactionGroup transactionGroup) {
+    _currentTransactionGroup = transactionGroup;
+    setupTransactionGroupListeners();
+    notifyListeners();
+  }
+  
+  SplitterTransactionGroup? get currentTransactionGroup => _currentTransactionGroup;
+
   Future<void> _initialize() async {
     print('Initializing AppState...');
 
@@ -34,7 +46,7 @@ class AppState extends ChangeNotifier {
     User? currentUser = _auth.currentUser;
     if (currentUser != null) {
       user = currentUser;
-      _setupFirestoreListeners();
+      _listenTransactionGroups();
     }
 
     _auth.authStateChanges().listen((User? newUser) {
@@ -43,7 +55,7 @@ class AppState extends ChangeNotifier {
 
       // only set up Firestore listeners if user is logged in
       if (user != null) {
-        _setupFirestoreListeners();
+        _listenTransactionGroups();
       } else {
         participants = [];
         currencyRates = [];
@@ -58,29 +70,48 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _setupFirestoreListeners() {
+  void _listenTransactionGroups() {
+    firestore.collection('transaction_groups').where('sharedWith', arrayContains: user!.uid).snapshots().listen((snapshot) {
+      transactionGroups = snapshot.docs.map((doc) {
+        return SplitterTransactionGroup.fromFirestore(doc);
+      }).toList();
+      notifyListeners();
+    });
+  }
+
+  void setupTransactionGroupListeners() {
 
     // Listen to participants
-    firestore.collection('users').doc(user!.uid).collection('participants').snapshots().listen((snapshot) {
-      participants = snapshot.docs.map((doc) => doc['name'].toString()).toList();
-      notifyListeners();
+    firestore
+      .collection('transaction_groups')
+      .doc(_currentTransactionGroup!.id)
+      .collection('participants')
+      .snapshots()
+      .listen((snapshot) {
+        participants = snapshot.docs.map((doc) => doc['name'].toString()).toList();
+        notifyListeners();
     });
 
     // Listen to currency rates
-    firestore.collection('users').doc(user!.uid).collection('currency_rates').snapshots().listen((snapshot) {
-      currencyRates = snapshot.docs.map((doc) {
-        return CurrencyRate(
-          symbol: doc['symbol'],
-          rate: doc['rate'],
-        );
-      }).toList();
-      notifyListeners();
+    firestore
+      .collection('transaction_groups')
+      .doc(_currentTransactionGroup!.id)
+      .collection('currency_rates')
+      .snapshots()
+      .listen((snapshot) {
+        currencyRates = snapshot.docs.map((doc) {
+          return CurrencyRate(
+            symbol: doc['symbol'],
+            rate: doc['rate'],
+          );
+        }).toList();
+        notifyListeners();
     });
 
     // Listen to transactions
     firestore
-      .collection('users')
-      .doc(user!.uid)
+      .collection('transaction_groups')
+      .doc(_currentTransactionGroup!.id)
       .collection('transactions')
       .snapshots()
       .listen((snapshot) {
@@ -138,9 +169,33 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<SplitterTransactionGroup> addTransactionGroup(SplitterTransactionGroup transactionGroup) async {
+    DocumentReference docRef = await firestore
+      .collection('transaction_groups')
+      .add(transactionGroup.toFirestore());
+    return transactionGroup.copyWith(id: docRef.id);
+  }
+
+  Future<void> updateTransactionGroup(SplitterTransactionGroup transactionGroup) async {
+    await firestore
+      .collection('transaction_groups')
+      .doc(transactionGroup.id)
+      .update(transactionGroup.toFirestore());
+  }
+
+  Future<void> removeTransactionGroup(String id) async {
+    await firestore
+      .collection('transaction_groups')
+      .doc(id)
+      .delete();
+  }
+
   Future<void> addParticipant(String name) async {
     if (!participants.contains(name.toLowerCase()) && user != null) {
-      await firestore.collection('users').doc(user!.uid).collection('participants').add({
+      await firestore
+        .collection('transaction_groups')
+        .doc(_currentTransactionGroup!.id)
+        .collection('participants').add({
         'name': name.toLowerCase()
       });
     }
@@ -149,37 +204,25 @@ class AppState extends ChangeNotifier {
   Future<void> removeParticipant(String id) async {
     if (user == null) return;
     await firestore
-      .collection('users')
-      .doc(user!.uid)
+      .collection('transaction_groups')
+      .doc(_currentTransactionGroup!.id)
       .collection('participants')
       .doc(id)
       .delete();
   }
 
-  // Future<void> setCurrencyRate(String symbol, double rate) async {
-  //   if (user == null) return;
-  //   await firestore
-  //     .collection('users')
-  //     .doc(user!.uid)
-  //     .collection('currency_rates')
-  //     .doc(symbol)
-  //     .set({
-  //   'rate': rate,
-  // }, SetOptions(merge: true));
-  // }
-
   Future<void> addCurrencyRate(String symbol, double rate) async {
     await firestore
-      .collection('users')
-      .doc(user!.uid)
+      .collection('transaction_groups')
+      .doc(_currentTransactionGroup!.id)
       .collection('currency_rates')
       .add({'symbol': symbol, 'rate': rate});
   }
 
   Future<void> updateCurrencyRate(String id, double rate) async {
     await firestore
-      .collection('users')
-      .doc(user!.uid)
+      .collection('transaction_groups')
+      .doc(_currentTransactionGroup!.id)
       .collection('currency_rates')
       .doc(id)
       .update({'rate': rate});
@@ -188,28 +231,19 @@ class AppState extends ChangeNotifier {
   Future<void> removeCurrencyRate(String id) async {
     if (user == null) return;
     await firestore
-      .collection('users')
-      .doc(user!.uid)
+      .collection('transaction_groups')
+      .doc(_currentTransactionGroup!.id)
       .collection('currency_rates')
       .doc(id)
       .delete();
-    // QuerySnapshot snapshot = await firestore
-    //   .collection('users')
-    //   .doc(user!.uid)
-    //   .collection('currency_rates')
-    //   .where('symbol', isEqualTo: symbol)
-    //   .get();
-    // for (var doc in snapshot.docs) {
-    //   await firestore.collection('currency_rates').doc(doc.id).delete();
-    // }
   }
 
   // Transactions
   Future<String> addTransaction(SplitterTransaction transaction) async {
     // await firestore.collection('transactions').add(transaction.toMap());
     DocumentReference docRef = await firestore
-      .collection('users')
-      .doc(_auth.currentUser!.uid)
+      .collection('transaction_groups')
+      .doc(_currentTransactionGroup!.id)
       .collection('transactions')
       .add(transaction.toMap());
 
@@ -220,8 +254,8 @@ class AppState extends ChangeNotifier {
   Future<void> removeTransaction(String id) async {
     if (user == null) return;
     await firestore
-      .collection('users')
-      .doc(user!.uid)
+      .collection('transaction_groups')
+      .doc(_currentTransactionGroup!.id)
       .collection('transactions')
       .doc(id.toString())
       .delete();
@@ -248,8 +282,8 @@ class AppState extends ChangeNotifier {
 
     // Delete participants
     QuerySnapshot participantsSnapshot = await firestore
-        .collection('users')
-        .doc(user!.uid)
+        .collection('transaction_groups')
+        .doc(_currentTransactionGroup!.id)
         .collection('participants')
         .get();
     for (var doc in participantsSnapshot.docs) {
@@ -258,8 +292,8 @@ class AppState extends ChangeNotifier {
 
     // Delete currency_rates
     QuerySnapshot currencySnapshot = await firestore
-        .collection('users')
-        .doc(user!.uid)
+        .collection('transaction_groups')
+        .doc(_currentTransactionGroup!.id)
         .collection('currency_rates')
         .get();
     for (var doc in currencySnapshot.docs) {
@@ -268,8 +302,8 @@ class AppState extends ChangeNotifier {
 
     // Delete transactions
     QuerySnapshot transactionsSnapshot = await firestore
-        .collection('users')
-        .doc(user!.uid)
+        .collection('transaction_groups')
+        .doc(_currentTransactionGroup!.id)
         .collection('transactions')
         .get();
     for (var doc in transactionsSnapshot.docs) {
@@ -284,8 +318,8 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleView() {
-    _showTransactions = !_showTransactions;
+  void toggleView([bool? newShowTransactions]) {
+    _showTransactions = newShowTransactions ?? !_showTransactions;
     notifyListeners();
   }
 }
