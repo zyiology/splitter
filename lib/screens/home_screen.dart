@@ -1,20 +1,21 @@
 // lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:splitter/models/transaction_group.dart';
 import 'package:splitter/screens/sign_in_screen.dart';
 import '../providers/app_state.dart';
-import 'add_transaction_screen.dart';
-import 'manage_participants_screen.dart';
-import 'manage_currency_rates_screen.dart';
+import '../screens/transaction_group_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Consumer<AppState>(
       builder: (context, appState, child) {
-        print("HomeScreen consumer building, isLoading: ${appState.isLoading}");
-        print("user: ${appState.user?.uid}");
-        print("participants: ${appState.participants.length}");
 
         if (appState.isLoading) {
           return Scaffold(
@@ -33,76 +34,32 @@ class HomeScreen extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text('Transaction Settlement'),
+            title: Text('Transaction Group List'),
             actions: [
-              IconButton(
-                icon: Icon(appState.showTransactions ? Icons.receipt_long : Icons.calculate),
-                tooltip: appState.showTransactions ? 'Show Settlements' : 'Show Transactions',
-                onPressed: () {
-                  appState.toggleView();
-                  if (!appState.showTransactions) {
-                    appState.calculateSettlements();
-                  }
-                }
-              ),
               IconButton(
                 icon: Icon(Icons.refresh),
                 onPressed: () {
                   appState.clearData();
                 },
               ),
+              IconButton(
+                icon: Icon(Icons.add),
+                onPressed: () {
+                  _showAddTransactionGroupDialog(context, appState);
+                }
+              )
             ],
           ),
           body: Column(
             children: [
               Expanded(
-                child: appState.showTransactions
-                    ? _buildTransactionsList(appState)
-                    : _buildSettlementsList(appState)
+                child: _buildTransactionGroupsList(appState)
               ),
               Divider(),
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Wrap(
                   children: [
-                    ElevatedButton.icon(
-                      icon: Icon(Icons.add),
-                      label: Text('Add Transaction'),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => AddTransactionScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    SizedBox(width: 10),
-                    ElevatedButton.icon(
-                      icon: Icon(Icons.people),
-                      label: Text('Manage Participants'),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ManageParticipantsScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    SizedBox(width: 10),
-                    ElevatedButton.icon(
-                      icon: Icon(Icons.currency_exchange),
-                      label: Text('Currency Rates'),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ManageCurrencyRatesScreen(),
-                          ),
-                        );
-                      },
-                    ),
                     // SizedBox(width: 10),
                     // ElevatedButton(
                     //   child: Text('Calculate'),
@@ -123,50 +80,88 @@ class HomeScreen extends StatelessWidget {
               ),
             ],
           ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () {
+              _showAddTransactionGroupDialog(context, appState);
+            },
+            child: Icon(Icons.add),
+          ),
         );
       },
     );
   }
 
-  Widget _buildTransactionsList(AppState appState) {
-    return appState.transactions.isEmpty
-        ? Center(child: Text('No transactions added.'))
+  void _showAddTransactionGroupDialog(BuildContext context, AppState appState) {
+    final TextEditingController _controller = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Add Transaction Group'),
+          content: TextField(
+            controller: _controller,
+            decoration: InputDecoration(hintText: "Group Name"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                String groupName = _controller.text.trim();
+                if (groupName.isNotEmpty) {
+                  SplitterTransactionGroup group = SplitterTransactionGroup(
+                    owner: appState.user!.uid,
+                    sharedWith: [appState.user!.uid],
+                    groupName: groupName,
+                    createdAt: DateTime.now()
+                  );
+                  // set the current transaction group, for TransactionGroupScreen to use
+                  appState.updateCurrentTransactionGroup(await appState.addTransactionGroup(group));
+                  if (!mounted) return;
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => TransactionGroupScreen()),
+                  );
+                }
+              },
+              child: Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+  Widget _buildTransactionGroupsList(AppState appState) {
+    return appState.transactionGroups.isEmpty
+        ? Center(child: Text('No transaction groups added.'))
         : ListView.builder(
-          itemCount: appState.transactions.length,
+          itemCount: appState.transactionGroups.length,
           itemBuilder: (context, index) {
-            final transaction = appState.transactions[index];
+            final transactionGroup = appState.transactionGroups[index];
             return ListTile(
               title: Text(
-                '${capitalize(transaction.payer)} paid ${transaction.currency}${transaction.amount.toStringAsFixed(2)} ',
+                capitalize(transactionGroup.groupName),
               ),
               subtitle: Text(
-                'Payees: ${transaction.payees.map(capitalize).join(', ')}'
+                'Created by: ${transactionGroup.owner}'
               ),
               trailing: IconButton(
                 icon: Icon(Icons.delete),
                 onPressed: () {
-                  appState.removeTransaction(transaction.id!);
+                  appState.removeTransactionGroup(transactionGroup.id!);
                 }
               ),
+              onTap: () {
+                appState.updateCurrentTransactionGroup(transactionGroup);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => TransactionGroupScreen()),
+                );
+              }
             );
           }
         );
-  }
-
-  Widget _buildSettlementsList(AppState appState) {
-    return appState.settlements.isEmpty
-        ? Center(child: Text('No settlements calculated.'))
-        : ListView.builder(
-            itemCount: appState.settlements.length,
-            itemBuilder: (context, index) {
-              final settlement = appState.settlements[index];
-              return ListTile(
-                title: Text(
-                  '${capitalize(settlement.debtor)} owes ${capitalize(settlement.creditor)} \$${settlement.amount.toStringAsFixed(2)}',
-                ),
-              );
-            },
-          );
   }
 
   String capitalize(String s) => s[0].toUpperCase() + s.substring(1);

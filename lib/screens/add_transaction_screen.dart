@@ -137,7 +137,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       );
 
       // Change homescreen to also show transactions instead of settlements
-      appState.toggleView();
+      appState.toggleView(true);
 
       try {
         final transactionId = await appState.addTransaction(transaction);

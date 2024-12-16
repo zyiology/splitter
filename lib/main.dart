@@ -34,6 +34,8 @@ void main() async {
 
 
 class TransactionSettlementApp extends StatelessWidget {
+  const TransactionSettlementApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
