@@ -6,6 +6,7 @@ import 'package:splitter/screens/sign_in_screen.dart';
 import '../providers/app_state.dart';
 import '../screens/transaction_group_screen.dart';
 import '../providers/utils.dart';
+import '../screens/add_transaction_group_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -13,6 +14,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+
   @override
   Widget build(BuildContext context) {
     return Consumer<AppState>(
@@ -44,10 +46,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
               IconButton(
-                icon: Icon(Icons.login),
+                icon: Icon(Icons.add),
                 onPressed: () {
-                  // _showAddTransactionGroupDialog(context, appState);
-                  _showJoinTransactionGroupDialog(context, appState);
+                  _showAddTransactionGroupDialog(context, appState);
                 }
               )
             ],
@@ -84,9 +85,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: () {
-              _showAddTransactionGroupDialog(context, appState);
+              // _showAddTransactionGroupDialog(context, appState);
+              _showJoinTransactionGroupDialog(context, appState);
             },
-            child: Icon(Icons.add),
+            child: Text('Join'),
           ),
         );
       },
@@ -94,45 +96,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showAddTransactionGroupDialog(BuildContext context, AppState appState) {
-    final TextEditingController _controller = TextEditingController();
-
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Add Transaction Group'),
-          content: TextField(
-            controller: _controller,
-            decoration: InputDecoration(hintText: "Group Name"),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                String groupName = _controller.text.trim();
-                if (groupName.isNotEmpty) {
-                  SplitterTransactionGroup group = SplitterTransactionGroup(
-                    owner: appState.user!.uid,
-                    sharedWith: [appState.user!.uid],
-                    groupName: groupName,
-                    createdAt: DateTime.now(),
-                    inviteToken: generateInviteToken(),
-                  );
-                  // set the current transaction group, for TransactionGroupScreen to use
-                  appState.updateCurrentTransactionGroup(await appState.addTransactionGroup(group));
-                  if (!mounted) return;
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => TransactionGroupScreen()),
-                  );
-                }
-              },
-              child: Text('Add'),
-            ),
-          ],
-        );
-      },
+      barrierDismissible: false, // Prevents closing the dialog by tapping outside
+      builder: (context) => AddTransactionGroupDialog(appState: appState),
     );
   }
+
 
   void _showJoinTransactionGroupDialog(BuildContext context, AppState appState) {
     final TextEditingController _controller = TextEditingController();
