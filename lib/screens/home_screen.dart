@@ -5,6 +5,7 @@ import 'package:splitter/models/transaction_group.dart';
 import 'package:splitter/screens/sign_in_screen.dart';
 import '../providers/app_state.dart';
 import '../screens/transaction_group_screen.dart';
+import '../providers/utils.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -43,9 +44,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
               IconButton(
-                icon: Icon(Icons.add),
+                icon: Icon(Icons.login),
                 onPressed: () {
-                  _showAddTransactionGroupDialog(context, appState);
+                  // _showAddTransactionGroupDialog(context, appState);
+                  _showJoinTransactionGroupDialog(context, appState);
                 }
               )
             ],
@@ -112,7 +114,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     owner: appState.user!.uid,
                     sharedWith: [appState.user!.uid],
                     groupName: groupName,
-                    createdAt: DateTime.now()
+                    createdAt: DateTime.now(),
+                    inviteToken: generateInviteToken(),
                   );
                   // set the current transaction group, for TransactionGroupScreen to use
                   appState.updateCurrentTransactionGroup(await appState.addTransactionGroup(group));
@@ -124,6 +127,44 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
               },
               child: Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showJoinTransactionGroupDialog(BuildContext context, AppState appState) {
+    final TextEditingController _controller = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Join Transaction Group'),
+          content: TextField(
+            controller: _controller,
+            decoration: InputDecoration(hintText: "Enter Invite Token"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context); // Capture before async call
+                String inviteToken = _controller.text.trim();
+                if (inviteToken.isNotEmpty) {
+                  bool success = await appState.joinTransactionGroup(inviteToken);
+                  if (success) {
+                    Navigator.pop(context);
+                  } else {
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text('Invalid invite token'),
+                      ),
+                    );
+                  }
+                }
+              },
+              child: Text('Join'),
             ),
           ],
         );

@@ -32,6 +32,9 @@ class SettlementService {
       }
     }
 
+    print("balances:");
+    print(balances);
+
     List<Settlement> simplified = [];
     const double tolerance = 0.01;
 
