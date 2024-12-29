@@ -1,6 +1,7 @@
 // lib/screens/transaction_group_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 import 'package:splitter/screens/home_screen.dart';
 import 'package:splitter/screens/sign_in_screen.dart';
 import '../providers/app_state.dart';
@@ -90,21 +91,32 @@ class TransactionGroupScreen extends StatelessWidget {
                         );
                       },
                     ),
-                    // SizedBox(width: 10),
-                    // ElevatedButton(
-                    //   child: Text('Calculate'),
-                    //   onPressed: () {
-                    //     if (appState.participants.isEmpty) {
-                    //       ScaffoldMessenger.of(context).showSnackBar(
-                    //         SnackBar(
-                    //           content: Text('Add participants first.'),
-                    //         ),
-                    //       );
-                    //       return;
-                    //     }
-                    //     appState.calculateSettlements();
-                    //   },
-                    // ),
+                    SizedBox(width: 10),
+                    ElevatedButton.icon(
+                      icon: Icon(Icons.share),
+                      label: Text('Share'),
+                      onPressed: () async {
+                        // copy the transactiongroup inviteToken to the clipboard
+                        final inviteToken = appState.currentTransactionGroup!.inviteToken;
+                        final messenger = ScaffoldMessenger.of(context); // Capture before async call
+                        try {
+                          await Clipboard.setData(ClipboardData(text: inviteToken));
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text('Invite token copied to clipboard'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        } catch (error) {
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text('Failed to copy invite token'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
+                    ),
                   ],
                 ),
               ),

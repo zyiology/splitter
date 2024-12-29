@@ -4,9 +4,11 @@ import '../models/transaction.dart';
 import '../models/currency_rate.dart';
 import "../models/transaction_group.dart";
 import '../services/settlement_service.dart';
+import './utils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 
 class AppState extends ChangeNotifier {
@@ -76,6 +78,8 @@ class AppState extends ChangeNotifier {
         return SplitterTransactionGroup.fromFirestore(doc);
       }).toList();
       notifyListeners();
+    }, onError: (error) {
+      print('Error fetching transaction groups: $error');
     });
   }
 
@@ -272,6 +276,59 @@ class AppState extends ChangeNotifier {
     );
     settlements = service.calculateSettlements();
     notifyListeners();
+  }
+
+  Future<bool> joinTransactionGroup(String inviteToken) async {
+    try {
+      // Get a reference to the function using the Firebase Functions
+      final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(
+        'addUserToGroup',
+      );
+
+      // Call the function
+      final result = await callable.call(<String, dynamic>{
+        'inviteToken': inviteToken,
+      });
+
+      // Check the result
+      final data = result.data as Map<String, dynamic>;
+      if (data['success'] == true) {
+        String groupId = data['groupId'];
+        print('Successfully joined group: $groupId');
+        return true;
+      } else {
+        return false;
+      }
+    } on FirebaseFunctionsException catch (e) {
+      print('FirebaseFunctionsException: ${e.code} - ${e.message}');
+      return false;
+    } catch (e) {
+      print('Error joining transaction group: $e');
+      return false;
+    }
+    // QuerySnapshot<Map<String, dynamic>> snapshot = await firestore
+    //   .collection('transaction_groups')
+    //   .where('inviteToken', isEqualTo: inviteToken)
+    //   .limit(1)
+    //   .get();
+
+    // if (snapshot.docs.isNotEmpty) {
+    //   DocumentSnapshot<Map<String, dynamic>> doc = snapshot.docs.first;
+    //   SplitterTransactionGroup transactionGroup = SplitterTransactionGroup.fromFirestore(doc);
+    //   try {
+    //     await firestore
+    //       .collection('transaction_groups')
+    //       .doc(transactionGroup.id)
+    //       .update({
+    //         'sharedWith': FieldValue.arrayUnion([user!.uid])
+    //       });
+    //     return true;
+    //   } catch (e) {
+    //     print('Error joining transaction group: $e');
+    //     return false;
+    //   }
+    // }
+    // return false;
   }
 
   Future<void> clearData() async {
