@@ -213,18 +213,19 @@ class AppState extends ChangeNotifier {
     final updatedSharedWith = List<String>.from(transactionGroup.sharedWith)
       ..remove(user!.uid);
 
+    // remove subscriptions if the current transaction group is being removed
+    if (_currentTransactionGroup?.id == id) {
+      _cancelAllSubscriptions();
+      _currentTransactionGroup = null;
+      participants = [];
+      currencyRates = [];
+      transactions = [];
+      settlements = [];
+    }
+
     if (updatedSharedWith.isEmpty) {
       await docRef.delete();
 
-      // Cancel subscriptions if the current group is deleted
-      if (_currentTransactionGroup?.id == id) {
-        _cancelAllSubscriptions();
-        _currentTransactionGroup = null;
-        participants = [];
-        currencyRates = [];
-        transactions = [];
-        settlements = [];
-      }
     } else {
       await docRef.update({'sharedWith': updatedSharedWith});
     }
