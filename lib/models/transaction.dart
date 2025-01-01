@@ -8,14 +8,14 @@ class SplitterTransaction {
   final double amount;
   final String payer;
   final List<String> payees;
-  final String currency;
+  final String currencySymbol;
 
   SplitterTransaction({
     this.id,
     required this.amount,
     required this.payer,
     required this.payees,
-    required this.currency,
+    required this.currencySymbol,
   });
 
   Map<String, dynamic> toMap() {
@@ -23,7 +23,7 @@ class SplitterTransaction {
       'amount': amount,
       'payer': payer,
       'payees': payees.join(','), // Store as comma-separated string
-      'currency': currency,
+      'currency': currencySymbol,
     };
   }
 
@@ -34,7 +34,7 @@ class SplitterTransaction {
       payer: map['payer'],
       // payees: List<String>.from(map['payees']), // Restore from comma-separated string
       payees: (map['payees'] as String).split(','), // Restore from comma-separated string
-      currency: map['currency'],
+      currencySymbol: map['currency'],
     );
   }
 }

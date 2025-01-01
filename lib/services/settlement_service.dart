@@ -19,7 +19,7 @@ class SettlementService {
     Map<String, double> balances = { for (var p in participants) p: 0.0 };
 
     for (var trans in transactions) {
-      double rate = currencyRates[trans.currency] ?? 1.0;
+      double rate = currencyRates[trans.currencySymbol] ?? 1.0;
       double amountInBase = trans.amount * rate;
       int numPayees = trans.payees.length;
       double splitAmount = numPayees > 0 ? amountInBase / numPayees : 0.0;

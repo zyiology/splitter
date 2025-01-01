@@ -10,13 +10,13 @@ void main() {
         amount: 100.0,
         payer: 'alice',
         payees: ['bob', 'charlie'],
-        currency: 'USD',
+        currencySymbol: 'USD',
       ),
       SplitterTransaction(
         amount: 150.0,
         payer: 'bob',
         payees: ['alice'],
-        currency: 'USD',
+        currencySymbol: 'USD',
       ),
     ];
 
