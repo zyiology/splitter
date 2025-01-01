@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'package:splitter/screens/home_screen.dart';
-import 'package:splitter/screens/sign_in_screen.dart';
 import '../providers/app_state.dart';
 import 'add_transaction_screen.dart';
 import 'manage_participants_screen.dart';
@@ -136,7 +135,7 @@ class TransactionGroupScreen extends StatelessWidget {
             final transaction = appState.transactions[index];
             return ListTile(
               title: Text(
-                '${transaction.payer} paid ${transaction.currency}${transaction.amount.toStringAsFixed(2)} ',
+                '${transaction.payer} paid ${transaction.currencySymbol}${transaction.amount.toStringAsFixed(2)} ',
               ),
               subtitle: Text(
                 'Payees: ${transaction.payees.join(', ')}'
@@ -161,7 +160,7 @@ class TransactionGroupScreen extends StatelessWidget {
               final settlement = appState.settlements[index];
               return ListTile(
                 title: Text(
-                  '${settlement.debtor} owes ${settlement.creditor} \$${settlement.amount.toStringAsFixed(2)}',
+                  '${settlement.debtor} owes ${settlement.creditor} ${appState.getCurrentTransactionCurrencySymbol()}${settlement.amount.toStringAsFixed(2)}',
                 ),
               );
             },

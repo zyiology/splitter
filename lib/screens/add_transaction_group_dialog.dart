@@ -1,6 +1,7 @@
 // lib/screens/add_transaction_group_dialog.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:splitter/models/currency_rate.dart';
 import '../providers/app_state.dart';
 import '../models/transaction_group.dart';
 import '../providers/utils.dart';
@@ -17,19 +18,29 @@ class AddTransactionGroupDialog extends StatefulWidget {
 
 class _AddTransactionGroupDialogState extends State<AddTransactionGroupDialog> {
   final TextEditingController _controller = TextEditingController();
+  final TextEditingController _currencyController = TextEditingController();
   bool isLoading = false;
 
   @override
   void dispose() {
     _controller.dispose();
+    _currencyController.dispose();
     super.dispose();
   }
 
   Future<void> _addGroup() async {
     String groupName = _controller.text.trim();
+    String currency = _currencyController.text.trim();
+
     if (groupName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Group name cannot be empty.')),
+      );
+      return;
+    }
+    if (currency.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Currency cannot be empty.')),
       );
       return;
     }
@@ -52,8 +63,19 @@ class _AddTransactionGroupDialogState extends State<AddTransactionGroupDialog> {
         inviteToken: generateInviteToken(),
       );
 
+      print('prepared transaction group');
+
       // Perform the async operation
       SplitterTransactionGroup addedGroup = await widget.appState.addTransactionGroup(group);
+      print('added transaction group');
+
+      // add the currency to the currency rates and update the current transaction group
+      CurrencyRate currRate = await widget.appState.addCurrencyRate(currency, 1.0, groupId:addedGroup.id);
+      print('added currency rate');
+      addedGroup = addedGroup.copyWith(defaultCurrencyId: currRate.id);
+      
+      // update the firestore document with the currency id
+      await widget.appState.updateTransactionGroup(addedGroup);
 
       // After the await, check if the widget is still mounted
       if (!mounted) return;
@@ -61,13 +83,6 @@ class _AddTransactionGroupDialogState extends State<AddTransactionGroupDialog> {
       // Update the current transaction group
       widget.appState.updateCurrentTransactionGroup(addedGroup);
 
-      // Navigator.of(context).pop(); // Close the dialog
-
-      // // Navigate to TransactionGroupScreen
-      // Navigator.push(
-      //   context,
-      //   MaterialPageRoute(builder: (context) => TransactionGroupScreen()),
-      // );
       if (mounted) {
         Navigator.pushReplacement(
           context,
@@ -96,13 +111,27 @@ class _AddTransactionGroupDialogState extends State<AddTransactionGroupDialog> {
               height: 80,
               child: Center(child: CircularProgressIndicator()),
             )
-          : TextField(
-              controller: _controller,
-              decoration: InputDecoration(
-                hintText: "Group Name",
-                border: OutlineInputBorder(),
+          : Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _controller,
+                decoration: InputDecoration(
+                  hintText: "Group Name",
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
+              // Spacing between fields
+              SizedBox(height: 16),
+              TextField(
+                controller: _currencyController,
+                decoration: InputDecoration(
+                  hintText: "Default Currency (e.g. USD)",
+                  border: OutlineInputBorder(),
+                ),
+              )
+            ]
+          ),
       actions: [
         TextButton(
           onPressed: isLoading ? null : () => Navigator.of(context).pop(),
