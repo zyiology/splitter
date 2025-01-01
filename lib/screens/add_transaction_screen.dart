@@ -53,8 +53,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       decoration: InputDecoration(labelText: 'Currency'),
                       items: currencies
                           .map((symbol) => DropdownMenuItem(
-                                child: Text(symbol),
                                 value: symbol,
+                                child: Text(symbol),
                               ))
                           .toList(),
                       onChanged: (value) {
@@ -133,7 +133,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         amount: _amount!,
         payer: _payer!,
         payees: _selectedPayees,
-        currency: _currency!,
+        currencySymbol: _currency!,
       );
 
       // Change homescreen to also show transactions instead of settlements

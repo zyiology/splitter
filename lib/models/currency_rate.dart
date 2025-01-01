@@ -1,4 +1,6 @@
 // lib/models/currency_rate.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class CurrencyRate {
   final String? id;
   final String symbol;
@@ -23,6 +25,15 @@ class CurrencyRate {
       id: map['id'],
       symbol: map['symbol'],
       rate: map['rate'],
+    );
+  }
+
+  factory CurrencyRate.fromFirestore(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    return CurrencyRate(
+      id: doc.id,
+      symbol: data['symbol'],
+      rate: data['rate'],
     );
   }
 }
