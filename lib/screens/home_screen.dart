@@ -155,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 capitalize(transactionGroup.groupName),
               ),
               subtitle: Text(
-                'Created by: ${transactionGroup.owner}'
+                'Created by: ${transactionGroup.ownerName}'
               ),
               trailing: IconButton(
                 icon: Icon(Icons.delete),

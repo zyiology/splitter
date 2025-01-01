@@ -1,12 +1,11 @@
 // lib/models/transaction_group.dart
 
-// import 'dart:ffi';
-// import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SplitterTransactionGroup {
   final String? id; // Primary key
   final String owner;
+  final String ownerName;
   final List<String> sharedWith;
   final String groupName;
   final DateTime createdAt;
@@ -15,6 +14,7 @@ class SplitterTransactionGroup {
   SplitterTransactionGroup({
     this.id,
     required this.owner,
+    required this.ownerName,
     required this.sharedWith,
     required this.groupName,
     required this.createdAt,
@@ -29,6 +29,7 @@ class SplitterTransactionGroup {
     return SplitterTransactionGroup(
       id: doc.id,
       owner: data['owner'] as String,
+      ownerName: data['ownerName'] as String,
       sharedWith: List<String>.from(data['sharedWith'] ?? []),
       groupName: data['groupName'] as String,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
@@ -40,6 +41,7 @@ class SplitterTransactionGroup {
   Map<String, dynamic> toFirestore() {
     return {
       'owner': owner,
+      'ownerName': ownerName,
       'sharedWith': sharedWith,
       'groupName': groupName,
       'createdAt': Timestamp.fromDate(createdAt),
@@ -50,6 +52,7 @@ class SplitterTransactionGroup {
   SplitterTransactionGroup copyWith({
     String? id,
     String? owner,
+    String? ownerName,
     List<String>? sharedWith,
     String? groupName,
     DateTime? createdAt,
@@ -58,6 +61,7 @@ class SplitterTransactionGroup {
     return SplitterTransactionGroup(
       id: id ?? this.id,
       owner: owner ?? this.owner,
+      ownerName: ownerName ?? this.ownerName,
       sharedWith: sharedWith ?? this.sharedWith,
       groupName: groupName ?? this.groupName,
       createdAt: createdAt ?? this.createdAt,

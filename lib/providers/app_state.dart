@@ -1,10 +1,10 @@
 // lib/providers/app_state.dart
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../models/transaction.dart';
 import '../models/currency_rate.dart';
 import "../models/transaction_group.dart";
 import '../services/settlement_service.dart';
-import './utils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,6 +15,7 @@ class AppState extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  final List<StreamSubscription> _subscriptions = [];
 
   User? user;
   bool isLoading = true;
@@ -34,6 +35,9 @@ class AppState extends ChangeNotifier {
   }
 
   void updateCurrentTransactionGroup(SplitterTransactionGroup transactionGroup) {
+    // Cancel existing subscriptions
+    _cancelAllSubscriptions();
+
     _currentTransactionGroup = transactionGroup;
     setupTransactionGroupListeners();
     notifyListeners();
@@ -86,7 +90,7 @@ class AppState extends ChangeNotifier {
   void setupTransactionGroupListeners() {
 
     // Listen to participants
-    firestore
+    StreamSubscription participantsSubscription = firestore
       .collection('transaction_groups')
       .doc(_currentTransactionGroup!.id)
       .collection('participants')
@@ -94,10 +98,14 @@ class AppState extends ChangeNotifier {
       .listen((snapshot) {
         participants = snapshot.docs.map((doc) => doc['name'].toString()).toList();
         notifyListeners();
+    }, onError: (error) {
+      print('Error fetching participants: $error');
     });
 
+    _subscriptions.add(participantsSubscription);
+
     // Listen to currency rates
-    firestore
+    StreamSubscription currencyRatesSubscription = firestore
       .collection('transaction_groups')
       .doc(_currentTransactionGroup!.id)
       .collection('currency_rates')
@@ -110,10 +118,14 @@ class AppState extends ChangeNotifier {
           );
         }).toList();
         notifyListeners();
+    }, onError: (error) {
+      print('Error fetching currency rates: $error');
     });
 
+    _subscriptions.add(currencyRatesSubscription);
+
     // Listen to transactions
-    firestore
+    StreamSubscription transactionsSubscription = firestore
       .collection('transaction_groups')
       .doc(_currentTransactionGroup!.id)
       .collection('transactions')
@@ -126,7 +138,11 @@ class AppState extends ChangeNotifier {
         );
       }).toList();
       notifyListeners();
+    }, onError: (error) {
+      print('Error fetching transactions: $error');
     });
+
+    _subscriptions.add(transactionsSubscription);
   }
 
   // Google Sign-In
@@ -192,6 +208,18 @@ class AppState extends ChangeNotifier {
       .collection('transaction_groups')
       .doc(id)
       .delete();
+
+    // Cancel subscriptions if the current group is deleted
+    if (_currentTransactionGroup?.id == id) {
+      _cancelAllSubscriptions();
+      _currentTransactionGroup = null;
+      participants = [];
+      currencyRates = [];
+      transactions = [];
+      settlements = [];
+    }
+
+    notifyListeners();
   }
 
   Future<void> addParticipant(String name) async {
@@ -375,8 +403,21 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _cancelAllSubscriptions() {
+    for (var sub in _subscriptions) {
+      sub.cancel();
+    }
+    _subscriptions.clear();
+  }
+
   void toggleView([bool? newShowTransactions]) {
     _showTransactions = newShowTransactions ?? !_showTransactions;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _cancelAllSubscriptions();
+    super.dispose();
   }
 }
