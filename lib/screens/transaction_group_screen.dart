@@ -136,10 +136,10 @@ class TransactionGroupScreen extends StatelessWidget {
             final transaction = appState.transactions[index];
             return ListTile(
               title: Text(
-                '${capitalize(transaction.payer)} paid ${transaction.currency}${transaction.amount.toStringAsFixed(2)} ',
+                '${transaction.payer} paid ${transaction.currency}${transaction.amount.toStringAsFixed(2)} ',
               ),
               subtitle: Text(
-                'Payees: ${transaction.payees.map(capitalize).join(', ')}'
+                'Payees: ${transaction.payees.join(', ')}'
               ),
               trailing: IconButton(
                 icon: Icon(Icons.delete),
@@ -161,7 +161,7 @@ class TransactionGroupScreen extends StatelessWidget {
               final settlement = appState.settlements[index];
               return ListTile(
                 title: Text(
-                  '${capitalize(settlement.debtor)} owes ${capitalize(settlement.creditor)} \$${settlement.amount.toStringAsFixed(2)}',
+                  '${settlement.debtor} owes ${settlement.creditor} \$${settlement.amount.toStringAsFixed(2)}',
                 ),
               );
             },

@@ -49,7 +49,7 @@ class _ManageParticipantsScreenState extends State<ManageParticipantsScreen> {
               itemBuilder: (context, index) {
                 final participant = appState.participants[index];
                 return ListTile(
-                  title: Text(capitalize(participant)),
+                  title: Text(participant),
                   trailing: IconButton(
                     icon: Icon(Icons.delete, color: Colors.red),
                     onPressed: () {
