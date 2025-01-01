@@ -204,21 +204,31 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> removeTransactionGroup(String id) async {
-    await firestore
-      .collection('transaction_groups')
-      .doc(id)
-      .delete();
+    final docRef = firestore.collection('transaction_groups').doc(id);
+    final doc = await docRef.get();
+    if (!doc.exists) return;
 
-    // Cancel subscriptions if the current group is deleted
-    if (_currentTransactionGroup?.id == id) {
-      _cancelAllSubscriptions();
-      _currentTransactionGroup = null;
-      participants = [];
-      currencyRates = [];
-      transactions = [];
-      settlements = [];
+    // remove the user from the sharedWith list
+    final transactionGroup = SplitterTransactionGroup.fromFirestore(doc);
+    final updatedSharedWith = List<String>.from(transactionGroup.sharedWith)
+      ..remove(user!.uid);
+
+    if (updatedSharedWith.isEmpty) {
+      await docRef.delete();
+
+      // Cancel subscriptions if the current group is deleted
+      if (_currentTransactionGroup?.id == id) {
+        _cancelAllSubscriptions();
+        _currentTransactionGroup = null;
+        participants = [];
+        currencyRates = [];
+        transactions = [];
+        settlements = [];
+      }
+    } else {
+      await docRef.update({'sharedWith': updatedSharedWith});
     }
-
+    
     notifyListeners();
   }
 
