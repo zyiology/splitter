@@ -40,6 +40,31 @@ class _HomeScreenState extends State<HomeScreen> {
             title: Text('Transaction Group List'),
             actions: [
               IconButton(
+                icon: Icon(Icons.logout),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text('Logout'),
+                      content: Text('Are you sure you want to logout?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            appState.signOut();
+                            Navigator.pop(context);
+                          },
+                          child: Text('Logout'),
+                        )
+                      ]
+                    )
+                  );
+                },
+              ),
+              IconButton(
                 icon: Icon(Icons.refresh),
                 onPressed: () {
                   appState.clearData();
