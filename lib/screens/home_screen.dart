@@ -152,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
             final transactionGroup = appState.transactionGroups[index];
             return ListTile(
               title: Text(
-                capitalize(transactionGroup.groupName),
+                transactionGroup.groupName,
               ),
               subtitle: Text(
                 'Created by: ${transactionGroup.ownerName}'

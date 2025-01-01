@@ -68,8 +68,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       decoration: InputDecoration(labelText: 'Payer'),
                       items: appState.participants
                           .map((p) => DropdownMenuItem(
-                                child: Text(capitalize(p)),
                                 value: p,
+                                child: Text(p),
                               ))
                           .toList(),
                       onChanged: (value) {
@@ -83,7 +83,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     Text('Payees'),
                     ...appState.participants.map((p) {
                       return CheckboxListTile(
-                        title: Text(capitalize(p)),
+                        title: Text(p),
                         value: _selectedPayees.contains(p),
                         onChanged: (bool? selected) {
                           setState(() {
