@@ -113,6 +113,7 @@ class AppState extends ChangeNotifier {
       .listen((snapshot) {
         currencyRates = snapshot.docs.map((doc) {
           return CurrencyRate(
+            id: doc.id,
             symbol: doc['symbol'],
             rate: doc['rate'],
           );
@@ -254,12 +255,20 @@ class AppState extends ChangeNotifier {
       .delete();
   }
 
-  Future<void> addCurrencyRate(String symbol, double rate) async {
-    await firestore
+  /// Adds a new currency exchange rate to a transaction group's currency rates collection.
+  /// 
+  /// [symbol] The currency symbol/code (e.g. "USD", "EUR")
+  /// [rate] The exchange rate relative to the base currency
+  /// [groupId] Optional transaction group ID. If not provided, uses current group
+  Future<CurrencyRate> addCurrencyRate(String symbol, double rate, {String? groupId}) async {
+    DocumentReference docRef = await firestore
       .collection('transaction_groups')
-      .doc(_currentTransactionGroup!.id)
+      .doc(groupId ?? _currentTransactionGroup!.id)
       .collection('currency_rates')
       .add({'symbol': symbol, 'rate': rate});
+
+    DocumentSnapshot doc = await docRef.get();
+    return CurrencyRate.fromFirestore(doc);
   }
 
   Future<void> updateCurrencyRate(String id, double rate) async {
@@ -279,6 +288,22 @@ class AppState extends ChangeNotifier {
       .collection('currency_rates')
       .doc(id)
       .delete();
+  }
+
+  String getCurrentTransactionCurrencySymbol() {
+    if (currentTransactionGroup == null) return '';
+    String id = currentTransactionGroup!.defaultCurrencyId!;
+    if (id.isEmpty) return '';
+    if (currencyRates.isEmpty) return '';
+    try {
+      CurrencyRate currencyRate = currencyRates.firstWhere(
+        (element) => element.id == id,
+        orElse: () => CurrencyRate(id: '', symbol: '', rate: 0), // Default value
+      );
+      return currencyRate.symbol;
+    } catch (e) {
+      return ''; // Fallback if anything goes wrong
+    }
   }
 
   // Transactions

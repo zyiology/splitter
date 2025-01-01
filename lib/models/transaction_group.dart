@@ -10,6 +10,7 @@ class SplitterTransactionGroup {
   final String groupName;
   final DateTime createdAt;
   final String inviteToken;
+  final String? defaultCurrencyId;
 
   SplitterTransactionGroup({
     this.id,
@@ -19,6 +20,7 @@ class SplitterTransactionGroup {
     required this.groupName,
     required this.createdAt,
     required this.inviteToken,
+    this.defaultCurrencyId, // can't make this required because it's a subcollection of the group
   });
 
   // Factory constructor to create a TransactionGroup from Firestore Document
@@ -34,6 +36,7 @@ class SplitterTransactionGroup {
       groupName: data['groupName'] as String,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       inviteToken: data['inviteToken'] as String,
+      defaultCurrencyId: data['defaultCurrencyId'] as String,
     );
   }
 
@@ -46,6 +49,7 @@ class SplitterTransactionGroup {
       'groupName': groupName,
       'createdAt': Timestamp.fromDate(createdAt),
       'inviteToken': inviteToken,
+      'defaultCurrencyId': defaultCurrencyId ?? '',
     };
   }
 
@@ -57,6 +61,7 @@ class SplitterTransactionGroup {
     String? groupName,
     DateTime? createdAt,
     String? inviteToken,
+    String? defaultCurrencyId,
   }) {
     return SplitterTransactionGroup(
       id: id ?? this.id,
@@ -66,6 +71,7 @@ class SplitterTransactionGroup {
       groupName: groupName ?? this.groupName,
       createdAt: createdAt ?? this.createdAt,
       inviteToken: inviteToken ?? this.inviteToken,
+      defaultCurrencyId: defaultCurrencyId ?? this.defaultCurrencyId,
     );
   }
 }
