@@ -1,4 +1,6 @@
+// lib/screens/add_transaction_group_dialog.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../providers/app_state.dart';
 import '../models/transaction_group.dart';
 import '../providers/utils.dart';
@@ -32,6 +34,10 @@ class _AddTransactionGroupDialogState extends State<AddTransactionGroupDialog> {
       return;
     }
 
+    // More aggressive keyboard dismissal
+    FocusManager.instance.primaryFocus?.unfocus();
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
+
     setState(() {
       isLoading = true;
     });
@@ -39,6 +45,7 @@ class _AddTransactionGroupDialogState extends State<AddTransactionGroupDialog> {
     try {
       SplitterTransactionGroup group = SplitterTransactionGroup(
         owner: widget.appState.user!.uid,
+        ownerName: widget.appState.user!.displayName!,
         sharedWith: [widget.appState.user!.uid],
         groupName: groupName,
         createdAt: DateTime.now(),
@@ -54,13 +61,21 @@ class _AddTransactionGroupDialogState extends State<AddTransactionGroupDialog> {
       // Update the current transaction group
       widget.appState.updateCurrentTransactionGroup(addedGroup);
 
-      Navigator.of(context).pop(); // Close the dialog
+      // Navigator.of(context).pop(); // Close the dialog
 
-      // Navigate to TransactionGroupScreen
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => TransactionGroupScreen()),
-      );
+      // // Navigate to TransactionGroupScreen
+      // Navigator.push(
+      //   context,
+      //   MaterialPageRoute(builder: (context) => TransactionGroupScreen()),
+      // );
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TransactionGroupScreen(),
+          ),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
