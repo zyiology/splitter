@@ -4,8 +4,7 @@ TODO:
 - modify sharing allow use of deep links/app links instead of only sharing the invite-id
 -show loading while joining tg
 -show who group is shared with somewhere
--make currency/payer autopopulate with first person
--force minimum one payee
+-- to do so, need to implement a public profile collection... and update that on user creation...
 
 maybe
 - stop the copy thing from popping up?
