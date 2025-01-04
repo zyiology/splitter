@@ -1,7 +1,4 @@
 // lib/models/transaction.dart
-import 'dart:ffi';
-
-import 'package:flutter/foundation.dart';
 
 class SplitterTransaction {
   final String? id; // Primary key

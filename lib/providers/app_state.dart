@@ -446,8 +446,8 @@ class AppState extends ChangeNotifier {
     _subscriptions.clear();
   }
 
-  void toggleView([bool? newShowTransactions]) {
-    _showTransactions = newShowTransactions ?? !_showTransactions;
+  void toggleView([bool? showTransactions]) {
+    _showTransactions = showTransactions ?? !_showTransactions;
     notifyListeners();
   }
 

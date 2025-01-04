@@ -95,11 +95,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                           });
                         },
                       );
-                    }).toList(),
+                    }),
                     SizedBox(height: 20),
                     ElevatedButton(
-                      child: Text('Add Transaction'),
                       onPressed: _addTransactionHandler,
+                      child: Text('Add Transaction'),
                     ),
                   ],
                 ),
@@ -140,8 +140,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       appState.toggleView(true);
 
       try {
-        final transactionId = await appState.addTransaction(transaction);
-        // Optionally, you can use the transactionId for further actions
+        await appState.addTransaction(transaction);
+
+        // Check if the widget is still mounted before proceeding
+        if (!mounted) return;
 
         // Pop loading indicator
         Navigator.of(context, rootNavigator: true).pop();
@@ -154,6 +156,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         // Pop the AddTransactionScreen
         Navigator.pop(context);
       } catch (error) {
+        if (!mounted) return;
         // Pop loading indicator
         Navigator.of(context, rootNavigator: true).pop();
 
