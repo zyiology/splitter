@@ -40,87 +40,10 @@ class TransactionGroupScreen extends StatelessWidget {
               ),
             ],
           ),
-          body: Column(
-            children: [
-              Expanded(
-                child: appState.showTransactions
-                    ? _buildTransactionsList(appState)
-                    : _buildSettlementsList(appState)
-              ),
-              Divider(),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Wrap(
-                  children: [
-                    ElevatedButton.icon(
-                      icon: Icon(Icons.add),
-                      label: Text('Add Transaction'),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => AddTransactionScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    SizedBox(width: 10),
-                    ElevatedButton.icon(
-                      icon: Icon(Icons.people),
-                      label: Text('Manage Participants'),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ManageParticipantsScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    SizedBox(width: 10),
-                    ElevatedButton.icon(
-                      icon: Icon(Icons.currency_exchange),
-                      label: Text('Currency Rates'),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ManageCurrencyRatesScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    SizedBox(width: 10),
-                    ElevatedButton.icon(
-                      icon: Icon(Icons.share),
-                      label: Text('Share'),
-                      onPressed: () async {
-                        // copy the transactiongroup inviteToken to the clipboard
-                        final inviteToken = appState.currentTransactionGroup!.inviteToken;
-                        final messenger = ScaffoldMessenger.of(context); // Capture before async call
-                        try {
-                          await Clipboard.setData(ClipboardData(text: inviteToken));
-                          messenger.showSnackBar(
-                            SnackBar(
-                              content: Text('Invite token copied to clipboard'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        } catch (error) {
-                          messenger.showSnackBar(
-                            SnackBar(
-                              content: Text('Failed to copy invite token'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          body: appState.showTransactions
+              ? _buildTransactionsList(appState)
+              : _buildSettlementsList(appState),
+          bottomNavigationBar: _buildBottomBar(context, appState),
         );
       },
     );
@@ -166,6 +89,182 @@ class TransactionGroupScreen extends StatelessWidget {
             },
           );
   }
+
+  Widget _buildBottomBar(BuildContext context, AppState appState) {
+    return BottomAppBar(
+      shape: CircularNotchedRectangle(), // Optional: if using FAB
+      notchMargin: 6.0, // Optional: if using FAB
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            // Add Transaction Button
+            IconButton(
+              icon: Icon(Icons.add),
+              tooltip: 'Add Transaction',
+              onPressed: () async {
+                // Navigate to AddTransactionScreen and await result
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AddTransactionScreen(),
+                  ),
+                );
+
+                // Handle the result and show SnackBar using the parent ScaffoldMessenger
+                if (result == 'success') {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Transaction added successfully!'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                } else if (result == 'error') {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to add transaction.'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+            ),
+            // Manage Participants Button
+            IconButton(
+              icon: Icon(Icons.people),
+              tooltip: 'Manage Participants',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ManageParticipantsScreen(),
+                  ),
+                );
+              },
+            ),
+            // Manage Currency Rates Button
+            IconButton(
+              icon: Icon(Icons.currency_exchange),
+              tooltip: 'Currency Rates',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ManageCurrencyRatesScreen(),
+                  ),
+                );
+              },
+            ),
+            // Share Button
+            IconButton(
+              icon: Icon(Icons.share),
+              tooltip: 'Share',
+              onPressed: () async {
+                // Copy the transaction group inviteToken to the clipboard
+                final inviteToken = appState.currentTransactionGroup!.inviteToken;
+                final messenger = ScaffoldMessenger.of(context); // Capture before async call
+                try {
+                  await Clipboard.setData(ClipboardData(text: inviteToken));
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text('Invite token copied to clipboard'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                } catch (error) {
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to copy invite token'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Widget _buildBottomBar(BuildContext context, AppState appState) {
+  //   return Container(
+  //     padding: const EdgeInsets.all(8.0),
+  //     color: Theme.of(context).scaffoldBackgroundColor,
+  //     child: SingleChildScrollView(
+  //       scrollDirection: Axis.horizontal,
+  //       child: Row(
+  //         children: [
+  //           ElevatedButton.icon(
+  //             icon: Icon(Icons.add),
+  //             label: Text('Add Transaction'),
+  //             onPressed: () {
+  //               Navigator.push(
+  //                 context,
+  //                 MaterialPageRoute(
+  //                   builder: (context) => AddTransactionScreen(),
+  //                 ),
+  //               );
+  //             },
+  //           ),
+  //           SizedBox(width: 10),
+  //           ElevatedButton.icon(
+  //             icon: Icon(Icons.people),
+  //             label: Text('Manage Participants'),
+  //             onPressed: () {
+  //               Navigator.push(
+  //                 context,
+  //                 MaterialPageRoute(
+  //                   builder: (context) => ManageParticipantsScreen(),
+  //                 ),
+  //               );
+  //             },
+  //           ),
+  //           SizedBox(width: 10),
+  //           ElevatedButton.icon(
+  //             icon: Icon(Icons.currency_exchange),
+  //             label: Text('Currency Rates'),
+  //             onPressed: () {
+  //               Navigator.push(
+  //                 context,
+  //                 MaterialPageRoute(
+  //                   builder: (context) => ManageCurrencyRatesScreen(),
+  //                 ),
+  //               );
+  //             },
+  //           ),
+  //           SizedBox(width: 10),
+  //           ElevatedButton.icon(
+  //             icon: Icon(Icons.share),
+  //             label: Text('Share'),
+  //             onPressed: () async {
+  //               // copy the transactiongroup inviteToken to the clipboard
+  //               final inviteToken = appState.currentTransactionGroup!.inviteToken;
+  //               final messenger = ScaffoldMessenger.of(context); // Capture before async call
+  //               try {
+  //                 await Clipboard.setData(ClipboardData(text: inviteToken));
+  //                 messenger.showSnackBar(
+  //                   SnackBar(
+  //                     content: Text('Invite token copied to clipboard'),
+  //                     duration: Duration(seconds: 2),
+  //                   ),
+  //                 );
+  //               } catch (error) {
+  //                 messenger.showSnackBar(
+  //                   SnackBar(
+  //                     content: Text('Failed to copy invite token'),
+  //                     duration: Duration(seconds: 2),
+  //                   ),
+  //                 );
+  //               }
+  //             },
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   String capitalize(String s) => s[0].toUpperCase() + s.substring(1);
 }
