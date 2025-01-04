@@ -179,8 +179,24 @@ class _HomeScreenState extends State<HomeScreen> {
               title: Text(
                 transactionGroup.groupName,
               ),
-              subtitle: Text(
-                'Created by: ${transactionGroup.ownerName}'
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Created by: ${transactionGroup.ownerName}'),
+                  // FutureBuilder<List<String>>(
+                  //   future: appState.fetchUserNames(transactionGroup.sharedWith),
+                  //   builder: (context, snapshot) {
+                  //     if (snapshot.connectionState == ConnectionState.waiting) {
+                  //       return Text('Loading shared users...');
+                  //     } else if (snapshot.hasError) {
+                  //       return Text('Error loading shared users');
+                  //     } else {
+                  //       final sharedNames = snapshot.data!.join(', ');
+                  //       return Text('Shared with: $sharedNames');
+                  //     }
+                  //   },
+                  // ),
+                ],
               ),
               trailing: IconButton(
                 icon: Icon(Icons.delete),

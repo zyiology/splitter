@@ -20,6 +20,19 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
     final currencies = appState.currencyRates.map((c) => c.symbol).toList();
+    
+    // set the initial value of currency to the default currency of the current transaction group
+    // Simpler currency lookup with null-aware operator
+    final defaultCurrencyId = appState.currentTransactionGroup?.defaultCurrencyId;
+    _currency = appState.currencyRates
+      .firstWhere(
+        (c) => c.id == defaultCurrencyId,
+        orElse: () => appState.currencyRates.first,
+      )
+      .symbol;
+
+    // set the initial value of payer to the first participant
+    _payer = appState.participants.first;
 
     return Scaffold(
       appBar: AppBar(
@@ -51,6 +64,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     ),
                     DropdownButtonFormField<String>(
                       decoration: InputDecoration(labelText: 'Currency'),
+                      value: _currency,
                       items: currencies
                           .map((symbol) => DropdownMenuItem(
                                 value: symbol,
@@ -66,6 +80,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     ),
                     DropdownButtonFormField<String>(
                       decoration: InputDecoration(labelText: 'Payer'),
+                      value: _payer,
                       items: appState.participants
                           .map((p) => DropdownMenuItem(
                                 value: p,

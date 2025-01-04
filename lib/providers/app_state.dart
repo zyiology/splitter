@@ -87,6 +87,16 @@ class AppState extends ChangeNotifier {
     });
   }
 
+  // Add this method inside _HomeScreenState
+  // Future<List<String>> fetchUserNames(List<String> userIds) async {
+  //   if (userIds.isEmpty) return [];
+  //   QuerySnapshot snapshot = await FirebaseFirestore.instance
+  //       .collection('users')
+  //       .where(FieldPath.documentId, whereIn: userIds)
+  //       .get();
+  //   return snapshot.docs.map((doc) => doc['displayName'] as String).toList();
+  // }
+
   void setupTransactionGroupListeners() {
 
     // Listen to participants
