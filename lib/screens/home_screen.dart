@@ -1,12 +1,11 @@
 // lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:splitter/models/transaction_group.dart';
 import 'package:splitter/screens/sign_in_screen.dart';
 import '../providers/app_state.dart';
 import '../screens/transaction_group_screen.dart';
-import '../providers/utils.dart';
-import '../screens/add_transaction_group_dialog.dart';
+import '../dialogs/add_transaction_group_dialog.dart';
+import '../dialogs/join_transaction_group_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -128,42 +127,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
   void _showJoinTransactionGroupDialog(BuildContext context, AppState appState) {
-    final TextEditingController _controller = TextEditingController();
-
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Join Transaction Group'),
-          content: TextField(
-            controller: _controller,
-            decoration: InputDecoration(hintText: "Enter Invite Token"),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                final messenger = ScaffoldMessenger.of(context); // Capture before async call
-                String inviteToken = _controller.text.trim();
-                if (inviteToken.isNotEmpty) {
-                  bool success = await appState.joinTransactionGroup(inviteToken);
-                  if (success) {
-                    Navigator.pop(context);
-                  } else {
-                    messenger.showSnackBar(
-                      SnackBar(
-                        content: Text('Invalid invite token'),
-                      ),
-                    );
-                  }
-                }
-              },
-              child: Text('Join'),
-            ),
-          ],
-        );
-      },
+      barrierDismissible: false, // Prevents closing the dialog by tapping outside
+      builder: (context) => JoinTransactionGroupDialog(appState: appState),
     );
   }
 
