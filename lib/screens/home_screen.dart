@@ -150,20 +150,32 @@ class _HomeScreenState extends State<HomeScreen> {
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Created by: ${transactionGroup.ownerName}'),
-                  // FutureBuilder<List<String>>(
-                  //   future: appState.fetchUserNames(transactionGroup.sharedWith),
-                  //   builder: (context, snapshot) {
-                  //     if (snapshot.connectionState == ConnectionState.waiting) {
-                  //       return Text('Loading shared users...');
-                  //     } else if (snapshot.hasError) {
-                  //       return Text('Error loading shared users');
-                  //     } else {
-                  //       final sharedNames = snapshot.data!.join(', ');
-                  //       return Text('Shared with: $sharedNames');
-                  //     }
-                  //   },
-                  // ),
+                  // Text('Created by: ${transactionGroup.ownerName}'),
+                  FutureBuilder<String>(
+                    future: appState.fetchUserName(transactionGroup.owner),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Text('Loading owner...');
+                      } else if (snapshot.hasError) {
+                        return Text('Error loading owner');
+                      } else {
+                        return Text('Created by: ${snapshot.data}');
+                      }
+                    },
+                  ),
+                  FutureBuilder<List<String>>(
+                    future: appState.fetchUserNames(transactionGroup.sharedWith),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Text('Loading shared users...');
+                      } else if (snapshot.hasError) {
+                        return Text('Error loading shared users');
+                      } else {
+                        final sharedNames = snapshot.data!.join(', ');
+                        return Text('Shared with: $sharedNames');
+                      }
+                    },
+                  ),
                 ],
               ),
               trailing: IconButton(

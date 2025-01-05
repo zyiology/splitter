@@ -1,5 +1,6 @@
 // lib/providers/app_state.dart
 import 'package:flutter/material.dart';
+import 'package:splitter/models/public_profile.dart';
 import 'dart:async';
 import '../models/transaction.dart';
 import '../models/currency_rate.dart';
@@ -16,9 +17,13 @@ class AppState extends ChangeNotifier {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
   final List<StreamSubscription> _subscriptions = [];
+  
+  // cache for public profiles, to save on Firestore reads
+  final Map<String, PublicProfile> _publicProfileCache = {};
 
   User? user;
   bool isLoading = true;
+  StreamSubscription? _transactionGroupsSubscription = null;
 
   List<SplitterTransactionGroup> transactionGroups = [];
   // String currentTransactionGroup!.id = '';
@@ -77,7 +82,7 @@ class AppState extends ChangeNotifier {
   }
 
   void _listenTransactionGroups() {
-    firestore.collection('transaction_groups').where('sharedWith', arrayContains: user!.uid).snapshots().listen((snapshot) {
+    _transactionGroupsSubscription = firestore.collection('transaction_groups').where('sharedWith', arrayContains: user!.uid).snapshots().listen((snapshot) {
       transactionGroups = snapshot.docs.map((doc) {
         return SplitterTransactionGroup.fromFirestore(doc);
       }).toList();
@@ -180,8 +185,34 @@ class AppState extends ChangeNotifier {
         idToken: googleAuth.idToken,
       );
 
-      // Sign in to Firebase with the Google [UserCredential]
       await _auth.signInWithCredential(credential);
+
+      // redundant, handled by cloud function
+      // Sign in to Firebase with the Google [UserCredential]
+      // final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      // final User? user = userCredential.user;
+
+      // if (user != null) {
+      //   // check if public profile exists
+      //   final publicProfileRef = firestore
+      //     .collection('publicProfiles')
+      //     .where('userId', isEqualTo: user.uid)
+      //     .limit(1);
+
+      //   final querySnapshot = await publicProfileRef.get();
+
+      //   if (querySnapshot.docs.isEmpty) {
+      //     // create public profile
+      //     final publicProfile = PublicProfile(
+      //       userId: user.uid,
+      //       displayName: user.displayName ?? 'No Name',
+      //       photoURL: user.photoURL,
+      //     );
+
+      //     await firestore
+      //       .collection('publicProfiles')
+      //       .doc(user.uid) // use the user's uid as the document ID
+      //       .set(publicProfile.toMap());
 
       isLoading = false;
       notifyListeners();
@@ -190,6 +221,71 @@ class AppState extends ChangeNotifier {
       notifyListeners();
       print(e);
       // TODO handle error in production
+    }
+  }
+
+  // Future<PublicProfile?> getPublicProfile(String userId) async {
+  //   // Check if the profile is already in the cache
+  //   if (_publicProfileCache.containsKey(userId)) {
+  //     return _publicProfileCache[userId]!;
+  //   }
+  //   try {
+  //     final querySnapshot = await firestore
+  //         .collection('publicProfiles')
+  //         .where('userId', isEqualTo: userId)
+  //         .limit(1)
+  //         .get();
+
+  //     if (querySnapshot.docs.isNotEmpty) {
+  //       final profile = PublicProfile.fromDocument(querySnapshot.docs.first);
+  //       _publicProfileCache[userId] = profile;
+  //       return profile;
+  //     } else {
+  //       return null;
+  //     }
+  //   } catch (e) {
+  //     print('Error fetching PublicProfile: $e');
+  //     return null;
+  //   }
+  // }
+
+  Future<List<String>> fetchUserNames(List<String> ids) async {
+    print("Fetching user names for ids: $ids");
+    if (ids.isEmpty) return [];
+    
+    // Fetch all names in parallel
+    List<String> names = await Future.wait(
+      ids.map((id) => fetchUserName(id))
+    );
+    
+    return names;
+  }
+
+  Future<String> fetchUserName(String id) async {
+    DocumentSnapshot doc = await firestore.collection('publicProfiles').doc(id).get();
+    return doc['displayName'] as String;
+  }
+
+  Future<PublicProfile?> getPublicProfile(String userId) async {
+    if (_publicProfileCache.containsKey(userId)) {
+      return _publicProfileCache[userId];
+    }
+
+    try {
+      final doc = await firestore.collection('publicProfiles').doc(userId).get();
+
+      if (doc.exists) {
+        final profile = PublicProfile.fromDocument(doc);
+        _publicProfileCache[userId] = profile;
+        return profile;
+      } else {
+        // Handle missing publicProfile, possibly log or notify
+        print('PublicProfile not found for user: $userId');
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching PublicProfile: $e');
+      return null;
     }
   }
 
@@ -454,6 +550,7 @@ class AppState extends ChangeNotifier {
       sub.cancel();
     }
     _subscriptions.clear();
+    if (_transactionGroupsSubscription != null) _transactionGroupsSubscription!.cancel();
   }
 
   void toggleView([bool? showTransactions]) {
