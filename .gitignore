@@ -48,5 +48,7 @@ app.*.map.json
 .firebase/
 android/app/google-services.json
 lib/firebase_options.dart
+.others/firebase-migration/serviceAccountKey.json
+.others/firebase-migration/node_modules/
 
 .env
