@@ -19,31 +19,43 @@ class AddTransactionGroupDialog extends StatefulWidget {
 class _AddTransactionGroupDialogState extends State<AddTransactionGroupDialog> {
   final TextEditingController _controller = TextEditingController();
   final TextEditingController _currencyController = TextEditingController();
+  final TextEditingController _serviceChargeController = TextEditingController();
+  final TextEditingController _taxController = TextEditingController();
   bool isLoading = false;
+
+  final _formKey = GlobalKey<FormState>(); // Form Key for validation
 
   @override
   void dispose() {
     _controller.dispose();
     _currencyController.dispose();
+    _serviceChargeController.dispose();
+    _taxController.dispose();
     super.dispose();
   }
 
   Future<void> _addGroup() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+    
     String groupName = _controller.text.trim();
     String currency = _currencyController.text.trim();
+    double serviceCharge = double.tryParse(_serviceChargeController.text) ?? 0.0;
+    double tax = double.tryParse(_taxController.text) ?? 0.0;
 
-    if (groupName.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Group name cannot be empty.')),
-      );
-      return;
-    }
-    if (currency.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Currency cannot be empty.')),
-      );
-      return;
-    }
+    // if (groupName.isEmpty) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(content: Text('Group name cannot be empty.')),
+    //   );
+    //   return;
+    // }
+    // if (currency.isEmpty) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(content: Text('Currency cannot be empty.')),
+    //   );
+    //   return;
+    // }
 
     // More aggressive keyboard dismissal
     FocusManager.instance.primaryFocus?.unfocus();
@@ -61,6 +73,8 @@ class _AddTransactionGroupDialogState extends State<AddTransactionGroupDialog> {
         groupName: groupName,
         createdAt: DateTime.now(),
         inviteToken: generateInviteToken(),
+        defaultTax: tax,
+        defaultServiceCharge: serviceCharge,
       );
 
       print('prepared transaction group');
@@ -111,26 +125,67 @@ class _AddTransactionGroupDialogState extends State<AddTransactionGroupDialog> {
               height: 80,
               child: Center(child: CircularProgressIndicator()),
             )
-          : Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _controller,
-                decoration: InputDecoration(
-                  hintText: "Group Name",
-                  border: OutlineInputBorder(),
-                ),
+          : SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: _controller,
+                    decoration: InputDecoration(
+                      hintText: "Group Name",
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Group name cannot be empty.';
+                      }
+                      return null;
+                    }
+                  ),
+                  // Spacing between fields
+                  SizedBox(height: 16),
+                  TextFormField(
+                    controller: _currencyController,
+                    decoration: InputDecoration(
+                      hintText: "Default Currency (e.g. USD)",
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Currency cannot be empty.';
+                      }
+                      return null;
+                    }
+                  ),
+                  SizedBox(height: 16),
+                  TextFormField(
+                    controller: _serviceChargeController,
+                    decoration: InputDecoration(
+                      hintText: "Default Service Charge (%)",
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                    ]
+                  ),
+                  SizedBox(height: 16),
+                  TextFormField(
+                    controller: _taxController,
+                    decoration: InputDecoration(
+                      hintText: "Default Tax (%)",
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                    ]
+                  ),
+                ]
               ),
-              // Spacing between fields
-              SizedBox(height: 16),
-              TextField(
-                controller: _currencyController,
-                decoration: InputDecoration(
-                  hintText: "Default Currency (e.g. USD)",
-                  border: OutlineInputBorder(),
-                ),
-              )
-            ]
+            ),
           ),
       actions: [
         TextButton(

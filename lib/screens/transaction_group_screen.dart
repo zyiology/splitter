@@ -104,6 +104,28 @@ class TransactionGroupScreen extends StatelessWidget {
               icon: Icon(Icons.add),
               tooltip: 'Add Transaction',
               onPressed: () async {
+                // if no participants, show an alert dialog
+                if (appState.participants.isEmpty) {
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: Text('No participants'),
+                        content: Text('Please add participants before adding a transaction.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: Text('OK'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                  return;
+                }
+
                 // Navigate to AddTransactionScreen and await result
                 final result = await Navigator.push(
                   context,

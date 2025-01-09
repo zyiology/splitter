@@ -40,6 +40,7 @@ class AppState extends ChangeNotifier {
   }
 
   void updateCurrentTransactionGroup(SplitterTransactionGroup transactionGroup) {
+    print('Updating current transaction group: ${transactionGroup.id}');
     // Cancel existing subscriptions
     _cancelAllSubscriptions();
 
@@ -103,6 +104,7 @@ class AppState extends ChangeNotifier {
   // }
 
   void setupTransactionGroupListeners() {
+    print('Setting up listeners for transaction group: ${_currentTransactionGroup!.id}');
 
     // Listen to participants
     StreamSubscription participantsSubscription = firestore
@@ -118,6 +120,7 @@ class AppState extends ChangeNotifier {
     });
 
     _subscriptions.add(participantsSubscription);
+    print('listening to participants');
 
     // Listen to currency rates
     StreamSubscription currencyRatesSubscription = firestore
@@ -139,6 +142,7 @@ class AppState extends ChangeNotifier {
     });
 
     _subscriptions.add(currencyRatesSubscription);
+    print('listening to currency rates');
 
     // Listen to transactions
     StreamSubscription transactionsSubscription = firestore
@@ -159,6 +163,7 @@ class AppState extends ChangeNotifier {
     });
 
     _subscriptions.add(transactionsSubscription);
+    print('listening to transactions');
   }
 
   // Google Sign-In

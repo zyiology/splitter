@@ -14,7 +14,29 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   double? _amount;
   String? _currency;
   String? _payer;
-  List<String> _selectedPayees = [];
+  final List<String> _selectedPayees = [];
+
+  // state variables for tax and service charge
+  bool _includeTax = false;
+  bool _includeServiceCharge = false;
+  double? _tax;
+  double? _serviceCharge;
+
+  @override
+  void initState() {
+    super.initState();
+    // Delay accessing context to after initState
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final appState = Provider.of<AppState>(context, listen: false);
+      setState(() {
+        _tax = appState.currentTransactionGroup?.defaultTax;
+        _serviceCharge = appState.currentTransactionGroup?.defaultServiceCharge;
+      });
+    });
+    // final appState = Provider.of<AppState>(context, listen: false);
+    // _tax = appState.currentTransactionGroup?.defaultTax;
+    // _serviceCharge = appState.currentTransactionGroup?.defaultServiceCharge;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,8 +53,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       )
       .symbol;
 
-    // set the initial value of payer to the first participant
-    _payer = appState.participants.first;
+    // set the initial value of payer to the first participant if it exists
+    _payer = appState.participants.isNotEmpty ? appState.participants.first : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -111,6 +133,86 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         },
                       );
                     }),
+                    SizedBox(height: 10),
+                    CheckboxListTile(
+                      title: Text('Include Tax'),
+                      value: _includeTax,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _includeTax = value ?? false;
+                          if (_includeTax && _tax == null) {
+                            _tax = appState.currentTransactionGroup?.defaultTax;
+                          }
+                        });
+                      },
+                      controlAffinity: ListTileControlAffinity.leading,
+                    ),
+                    if (_includeTax)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: TextFormField(
+                          decoration: InputDecoration(labelText: 'Tax (%)'),
+                          keyboardType: TextInputType.numberWithOptions(decimal: true),
+                          initialValue: _tax?.toString(),
+                          validator: (value) {
+                            if (_includeTax) {
+                              if (value == null || value.isEmpty) {
+                                return 'Enter tax percentage';
+                              }
+                              if (double.tryParse(value) == null) {
+                                return 'Enter a valid number';
+                              }
+                            }
+                            return null;
+                          },
+                          onSaved: (value) {
+                            if (_includeTax) {
+                              _tax = double.parse(value!);
+                            }
+                          },
+                        ),
+                      ),
+                    SizedBox(height: 10),
+
+                    // Service charge checkbox and textfield
+                    CheckboxListTile(
+                      title: Text('Include Service Charge'),
+                      value: _includeServiceCharge,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _includeServiceCharge = value ?? false;
+                          if (_includeServiceCharge && _serviceCharge == null) {
+                            _serviceCharge = appState.currentTransactionGroup?.defaultServiceCharge;
+                          }
+                        });
+                      },
+                      controlAffinity: ListTileControlAffinity.leading,
+                    ),
+                    if (_includeServiceCharge)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: TextFormField(
+                          decoration: InputDecoration(labelText: 'Service Charge (%)'),
+                          keyboardType: TextInputType.numberWithOptions(decimal: true),
+                          initialValue: _serviceCharge?.toString(),
+                          validator: (value) {
+                            if (_includeServiceCharge) {
+                              if (value == null || value.isEmpty) {
+                                return 'Enter service charge percentage';
+                              }
+                              if (double.tryParse(value) == null) {
+                                return 'Enter a valid number';
+                              }
+                            }
+                            return null;
+                          },
+                          onSaved: (value) {
+                            if (_includeServiceCharge) {
+                              _serviceCharge = double.parse(value!);
+                            }
+                          },
+                        ),
+                      ),
                     SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: _addTransactionHandler,
@@ -125,7 +227,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
   String capitalize(String s) => s[0].toUpperCase() + s.substring(1);
 
-
   Future<void> _addTransactionHandler() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
@@ -134,6 +235,17 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           SnackBar(content: Text('Select at least one payee.')),
         );
         return;
+      }
+
+      // Calculate the adjusted amount
+      double adjustedAmount = _amount!;
+
+      if (_includeTax && _tax != null) {
+        adjustedAmount *= (1 + _tax! / 100);
+      }
+
+      if (_includeServiceCharge && _serviceCharge != null) {
+        adjustedAmount *= (1 + _serviceCharge! / 100);
       }
 
       // Show loading indicator
@@ -145,7 +257,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
       final appState = Provider.of<AppState>(context, listen: false);
       final transaction = SplitterTransaction(
-        amount: _amount!,
+        amount: adjustedAmount,
         payer: _payer!,
         payees: _selectedPayees,
         currencySymbol: _currency!,

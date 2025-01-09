@@ -1,5 +1,7 @@
 // lib/models/transaction_group.dart
 
+import 'dart:ffi';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SplitterTransactionGroup {
@@ -11,6 +13,8 @@ class SplitterTransactionGroup {
   final DateTime createdAt;
   final String inviteToken;
   final String? defaultCurrencyId;
+  final double? defaultTax;
+  final double? defaultServiceCharge;
 
   SplitterTransactionGroup({
     this.id,
@@ -21,6 +25,8 @@ class SplitterTransactionGroup {
     required this.createdAt,
     required this.inviteToken,
     this.defaultCurrencyId, // can't make this required because it's a subcollection of the group
+    this.defaultTax = 0.0,
+    this.defaultServiceCharge = 0.0,
   });
 
   // Factory constructor to create a TransactionGroup from Firestore Document
@@ -37,6 +43,8 @@ class SplitterTransactionGroup {
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       inviteToken: data['inviteToken'] as String,
       defaultCurrencyId: data['defaultCurrencyId'] as String,
+      defaultTax: (data['defaultTax'] != null) ? data['defaultTax'].toDouble() : 0.0,
+      defaultServiceCharge: (data['defaultServiceCharge'] != null) ? data['defaultServiceCharge'].toDouble() : 0.0,
     );
   }
 
@@ -50,6 +58,8 @@ class SplitterTransactionGroup {
       'createdAt': Timestamp.fromDate(createdAt),
       'inviteToken': inviteToken,
       'defaultCurrencyId': defaultCurrencyId ?? '',
+      'defaultTax': defaultTax ?? 0.0,
+      'defaultServiceCharge': defaultServiceCharge ?? 0.0,
     };
   }
 
@@ -62,6 +72,8 @@ class SplitterTransactionGroup {
     DateTime? createdAt,
     String? inviteToken,
     String? defaultCurrencyId,
+    double? defaultTax,
+    double? defaultServiceCharge,
   }) {
     return SplitterTransactionGroup(
       id: id ?? this.id,
@@ -72,6 +84,8 @@ class SplitterTransactionGroup {
       createdAt: createdAt ?? this.createdAt,
       inviteToken: inviteToken ?? this.inviteToken,
       defaultCurrencyId: defaultCurrencyId ?? this.defaultCurrencyId,
+      defaultTax: defaultTax ?? this.defaultTax,
+      defaultServiceCharge: defaultServiceCharge ?? this.defaultServiceCharge,
     );
   }
 }
