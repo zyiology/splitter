@@ -63,12 +63,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
               ),
-              IconButton(
-                icon: Icon(Icons.refresh),
-                onPressed: () {
-                  appState.clearData();
-                },
-              ),
+              // IconButton(
+              //   icon: Icon(Icons.refresh),
+              //   onPressed: () {
+              //     appState.clearData();
+              //   },
+              // ),
               IconButton(
                 icon: Icon(Icons.add),
                 onPressed: () {

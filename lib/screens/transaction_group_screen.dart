@@ -32,12 +32,12 @@ class TransactionGroupScreen extends StatelessWidget {
                   }
                 }
               ),
-              IconButton(
-                icon: Icon(Icons.refresh),
-                onPressed: () {
-                  appState.clearData();
-                },
-              ),
+              // IconButton(
+              //   icon: Icon(Icons.refresh),
+              //   onPressed: () {
+              //     appState.clearData();
+              //   },
+              // ),
             ],
           ),
           body: appState.showTransactions
