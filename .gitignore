@@ -52,3 +52,4 @@ lib/firebase_options.dart
 .others/firebase-migration/node_modules/
 
 .env
+.todo
