@@ -55,7 +55,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       .symbol;
 
     // set the initial value of payer to the first participant if it exists
-    _payer = appState.participants.isNotEmpty ? appState.participants.first : null;
+    _payer = appState.participants.isNotEmpty ? appState.participants.first.name : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -106,8 +106,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       value: _payer,
                       items: appState.participants
                           .map((p) => DropdownMenuItem(
-                                value: p,
-                                child: Text(p),
+                                value: p.name,
+                                child: Text(p.name),
                               ))
                           .toList(),
                       onChanged: (value) {
@@ -121,14 +121,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     Text('Payees'),
                     ...appState.participants.map((p) {
                       return CheckboxListTile(
-                        title: Text(p),
-                        value: _selectedPayees.contains(p),
+                        title: Text(p.name),
+                        value: _selectedPayees.contains(p.name),
                         onChanged: (bool? selected) {
                           setState(() {
                             if (selected == true) {
-                              _selectedPayees.add(p);
+                              _selectedPayees.add(p.name);
                             } else {
-                              _selectedPayees.remove(p);
+                              _selectedPayees.remove(p.name);
                             }
                           });
                         },

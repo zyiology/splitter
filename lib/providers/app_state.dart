@@ -1,5 +1,6 @@
 // lib/providers/app_state.dart
 import 'package:flutter/material.dart';
+import 'package:splitter/models/participant.dart';
 import 'package:splitter/models/public_profile.dart';
 import 'dart:async';
 import '../models/transaction.dart';
@@ -30,7 +31,7 @@ class AppState extends ChangeNotifier {
   List<SplitterTransactionGroup> transactionGroups = [];
   // String currentTransactionGroup!.id = '';
   SplitterTransactionGroup? _currentTransactionGroup;
-  List<String> participants = [];
+  List<Participant> participants = [];
   List<CurrencyRate> currencyRates = [];
   List<SplitterTransaction> transactions = [];
   List<Settlement> settlements = [];
@@ -115,7 +116,10 @@ class AppState extends ChangeNotifier {
       .collection('participants')
       .snapshots()
       .listen((snapshot) {
-        participants = snapshot.docs.map((doc) => doc['name'].toString()).toList();
+        // participants = snapshot.docs.map((doc) => doc['name'].toString()).toList();
+        participants = snapshot.docs.map((doc) {
+          return Participant.fromFirestore(doc.id, doc.data());
+        }).toList();
         notifyListeners();
     }, onError: (error) {
       print('Error fetching participants: $error');

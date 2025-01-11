@@ -32,7 +32,7 @@ class _ManageParticipantsScreenState extends State<ManageParticipantsScreen> {
               icon: Icon(Icons.add),
               onPressed: () {
                 String name = _controller.text.trim().toLowerCase();
-                if (name.isNotEmpty && !appState.participants.contains(name)) {
+                if (name.isNotEmpty && !appState.participants.any((p) => p.name == name)) {
                   appState.addParticipant(name);
                   _controller.clear();
                 } else {
@@ -49,11 +49,12 @@ class _ManageParticipantsScreenState extends State<ManageParticipantsScreen> {
               itemBuilder: (context, index) {
                 final participant = appState.participants[index];
                 return ListTile(
-                  title: Text(participant),
+                  title: Text(participant.name),
                   trailing: IconButton(
                     icon: Icon(Icons.delete, color: Colors.red),
                     onPressed: () {
-                      appState.removeParticipant(participant);
+                      print('going to delete $participant');
+                      appState.removeParticipant(participant.id!);
                     },
                   ),
                 );

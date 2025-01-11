@@ -1,12 +1,14 @@
 // lib/services/settlement_service.dart
 import 'dart:collection';
 // import 'package:decimal/decimal.dart'; // Add decimal support if needed
+import 'package:splitter/models/participant.dart';
+
 import '../models/transaction.dart';
 import '../models/currency_rate.dart';
 
 class SettlementService {
   final List<SplitterTransaction> transactions;
-  final List<String> participants;
+  final List<Participant> participants;
   final Map<String, double> currencyRates;
 
   SettlementService({
@@ -16,7 +18,7 @@ class SettlementService {
   });
 
   List<Settlement> calculateSettlements() {
-    Map<String, double> balances = { for (var p in participants) p: 0.0 };
+    Map<String, double> balances = { for (var p in participants) p.name: 0.0 };
 
     for (var trans in transactions) {
       double rate = currencyRates[trans.currencySymbol] ?? 1.0;

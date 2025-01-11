@@ -12,9 +12,9 @@ class Participant {
     };
   }
 
-  factory Participant.fromMap(Map<String, dynamic> map) {
+  factory Participant.fromFirestore(String id, Map<String, dynamic> map) {
     return Participant(
-      id: map['id'],
+      id: id,
       name: map['name'],
     );
   }
