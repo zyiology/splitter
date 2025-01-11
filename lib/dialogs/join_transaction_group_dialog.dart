@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../providers/app_state.dart';
+import '../utils/input_utils.dart';
 
 class JoinTransactionGroupDialog extends StatefulWidget {
   final AppState appState;
@@ -24,6 +25,9 @@ class _JoinTransactionGroupDialogState
 
     final messenger = ScaffoldMessenger.of(context);
     String inviteToken = _controller.text.trim();
+    // sanitize the inputs
+    inviteToken = InputUtils.sanitizeString(inviteToken);
+
     if (inviteToken.isNotEmpty) {
       bool success = await widget.appState.joinTransactionGroup(inviteToken);
       if (!mounted) return;

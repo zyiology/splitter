@@ -6,6 +6,7 @@ import '../providers/app_state.dart';
 import '../models/transaction_group.dart';
 import '../providers/utils.dart';
 import '../screens/transaction_group_screen.dart';
+import '../utils/input_utils.dart';
 
 class AddTransactionGroupDialog extends StatefulWidget {
   final AppState appState;
@@ -43,6 +44,10 @@ class _AddTransactionGroupDialogState extends State<AddTransactionGroupDialog> {
     String currency = _currencyController.text.trim();
     double serviceCharge = double.tryParse(_serviceChargeController.text) ?? 0.0;
     double tax = double.tryParse(_taxController.text) ?? 0.0;
+
+    // sanitize the inputs
+    groupName = InputUtils.sanitizeString(groupName);
+    currency = InputUtils.sanitizeString(currency);
 
     // if (groupName.isEmpty) {
     //   ScaffoldMessenger.of(context).showSnackBar(

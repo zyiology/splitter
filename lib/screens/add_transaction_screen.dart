@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import '../models/transaction.dart';
+import '../utils/input_utils.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   @override
@@ -254,6 +255,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         barrierDismissible: false,
         builder: (context) => Center(child: CircularProgressIndicator()),
       );
+
+      // sanitize inputs
+      
+
 
       final appState = Provider.of<AppState>(context, listen: false);
       final transaction = SplitterTransaction(

@@ -11,6 +11,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
+import '../utils/input_utils.dart';
+
 
 class AppState extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -346,6 +348,9 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> addParticipant(String name) async {
+    // sanitize the input
+    name = InputUtils.sanitizeString(name);
+
     if (!participants.contains(name.toLowerCase()) && user != null) {
       await firestore
         .collection('transaction_groups')
