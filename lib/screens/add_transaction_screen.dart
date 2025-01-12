@@ -22,7 +22,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   bool _includeServiceCharge = false;
   double? _tax;
   double? _serviceCharge;
-
+  
   @override
   void initState() {
     super.initState();
@@ -32,6 +32,18 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       setState(() {
         _tax = appState.currentTransactionGroup?.defaultTax;
         _serviceCharge = appState.currentTransactionGroup?.defaultServiceCharge;
+
+        // Initialize currency
+        final defaultCurrencyId = appState.currentTransactionGroup?.defaultCurrencyId;
+        _currency = appState.currencyRates
+            .firstWhere(
+              (c) => c.id == defaultCurrencyId,
+              orElse: () => appState.currencyRates.first,
+            )
+            .symbol;
+
+        // Initialize payer
+        _payer = appState.participants.isNotEmpty ? appState.participants.first.name : null;
       });
     });
     // final appState = Provider.of<AppState>(context, listen: false);
@@ -43,19 +55,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
     final currencies = appState.currencyRates.map((c) => c.symbol).toList();
-    
-    // set the initial value of currency to the default currency of the current transaction group
-    // Simpler currency lookup with null-aware operator
-    final defaultCurrencyId = appState.currentTransactionGroup?.defaultCurrencyId;
-    _currency = appState.currencyRates
-      .firstWhere(
-        (c) => c.id == defaultCurrencyId,
-        orElse: () => appState.currencyRates.first,
-      )
-      .symbol;
-
-    // set the initial value of payer to the first participant if it exists
-    _payer = appState.participants.isNotEmpty ? appState.participants.first.name : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -257,8 +256,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       );
 
       // sanitize inputs
-      
-
+      _payer = InputUtils.sanitizeString(_payer!);
+      _selectedPayees
+          .replaceRange(0, _selectedPayees.length, _selectedPayees.map((payee) => InputUtils.sanitizeString(payee)).toList());
+      _currency = InputUtils.sanitizeString(_currency!);
+      // print('adding transaction. payer: $_payer, payees: $_selectedPayees, currency: $_currency');
 
       final appState = Provider.of<AppState>(context, listen: false);
       final transaction = SplitterTransaction(
