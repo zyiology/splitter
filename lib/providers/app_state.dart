@@ -367,6 +367,8 @@ class AppState extends ChangeNotifier {
 
   Future<void> removeParticipant(String id) async {
     if (user == null) return;
+    // check if participant is currently being used in any transactions
+
     await firestore
       .collection('transaction_groups')
       .doc(_currentTransactionGroup!.id)
@@ -391,23 +393,39 @@ class AppState extends ChangeNotifier {
     return CurrencyRate.fromFirestore(doc);
   }
 
-  Future<void> updateCurrencyRate(String id, double rate) async {
-    await firestore
-      .collection('transaction_groups')
-      .doc(_currentTransactionGroup!.id)
-      .collection('currency_rates')
-      .doc(id)
-      .update({'rate': rate});
+  Future<bool> updateCurrencyRate(String id, double rate) async {
+    try {
+      await firestore
+        .collection('transaction_groups')
+        .doc(_currentTransactionGroup!.id)
+        .collection('currency_rates')
+        .doc(id)
+        .update({'rate': rate});
+      return true;
+    } catch (e) {
+      print('Error updating currency rate: $e');
+      return false;
+    }
   }
 
-  Future<void> removeCurrencyRate(String id) async {
-    if (user == null) return;
+  Future<bool> removeCurrencyRate(String id) async {
+    if (user == null) return false;
+
+    // Check if currency rate is currently being used in any transactions
+    for (var transaction in transactions) {
+      if (transaction.currencySymbol == id) {
+        return false;
+      }
+    }
+
     await firestore
       .collection('transaction_groups')
       .doc(_currentTransactionGroup!.id)
       .collection('currency_rates')
       .doc(id)
       .delete();
+
+    return true;
   }
 
   String getCurrentTransactionCurrencySymbol() {

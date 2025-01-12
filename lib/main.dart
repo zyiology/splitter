@@ -6,6 +6,9 @@ import 'screens/home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
+
 void main() async {
   print("Initializing Firebase...");
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +52,7 @@ class TransactionSettlementApp extends StatelessWidget {
           return HomeScreen();
         },
       ),
+      scaffoldMessengerKey: scaffoldMessengerKey,
     );
   }
 }
