@@ -365,9 +365,15 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<void> removeParticipant(String id) async {
-    if (user == null) return;
+  Future<bool> removeParticipant(String id) async {
+    if (user == null) return false;
+
     // check if participant is currently being used in any transactions
+    for (var transaction in transactions) {
+      if (transaction.payer == id || transaction.payees.contains(id)) {
+        return false;
+      }
+    }
 
     await firestore
       .collection('transaction_groups')
@@ -375,6 +381,8 @@ class AppState extends ChangeNotifier {
       .collection('participants')
       .doc(id)
       .delete();
+    
+    return true;
   }
 
   /// Adds a new currency exchange rate to a transaction group's currency rates collection.

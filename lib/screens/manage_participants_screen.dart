@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../main.dart';
 
 class ManageParticipantsScreen extends StatefulWidget {
   @override
@@ -52,9 +53,22 @@ class _ManageParticipantsScreenState extends State<ManageParticipantsScreen> {
                   title: Text(participant.name),
                   trailing: IconButton(
                     icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: () {
+                    onPressed: () async {
                       print('going to delete $participant');
-                      appState.removeParticipant(participant.id!);
+                      bool success = await appState.removeParticipant(participant.id!);
+                      if (!success) {
+                        scaffoldMessengerKey.currentState?.showSnackBar(
+                            SnackBar(
+                                content: Text(
+                                    'Failed to delete participant ${participant.name}. Please make sure they are not part of any transactions.')),
+                          );
+                      } else {
+                        scaffoldMessengerKey.currentState?.showSnackBar(
+                            SnackBar(
+                                content: Text(
+                                    'Deleted participant ${participant.name}')),
+                          );
+                      }
                     },
                   ),
                 );
