@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import '../models/currency_rate.dart';
+import '../dialogs/add_currency_dialog.dart'; 
 import '../main.dart';
 
 class ManageCurrencyRatesScreen extends StatefulWidget {
@@ -124,84 +125,40 @@ class _ManageCurrencyRatesScreenState extends State<ManageCurrencyRatesScreen> {
     );
 
     if (confirmed == true) {
-      _removeCurrency(currency.id!, currency.symbol);
+      _removeCurrency(currency);
     }
   }
 
-  Future<void> _removeCurrency(String id, String symbol) async {
+  Future<void> _removeCurrency(CurrencyRate currencyRate) async {
     final appState = Provider.of<AppState>(context, listen: false);
 
-    bool success = await appState.removeCurrencyRate(id);
+    bool success = await appState.removeCurrencyRate(currencyRate);
     
     if (success) {
 
       // Optionally, show a success message
       scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(content: Text('$symbol has been removed.')),
+        SnackBar(content: Text('${currencyRate.symbol} has been removed.')),
       );
       // Dispose the controller as it's no longer needed
-      if (_controllers.containsKey(id)) {
-        _controllers[id]!.dispose();
-        _controllers.remove(id);
+      if (_controllers.containsKey(currencyRate.id)) {
+        _controllers[currencyRate.id]!.dispose();
+        _controllers.remove(currencyRate.id);
       }
     } else {
       scaffoldMessengerKey.currentState?.showSnackBar(
         SnackBar(
             content: Text(
-                '$symbol is currently used in transactions and cannot be removed.')),
+                '${currencyRate.symbol} is currently used in transactions and cannot be removed.')),
       );
     }
   }
 
-
   void _showAddCurrencyDialog(BuildContext context) {
-    final symbolController = TextEditingController();
-    final rateController = TextEditingController();
-
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text("Add Currency"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: symbolController,
-                decoration: InputDecoration(labelText: 'Currency Symbol'),
-              ),
-              TextField(
-                controller: rateController,
-                decoration: InputDecoration(labelText: 'Exchange Rate'),
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: Text("Cancel"),
-              onPressed: () => Navigator.pop(context),
-            ),
-            ElevatedButton(
-              child: Text("Add"),
-              onPressed: () {
-                String symbol = symbolController.text.trim();
-                double? rate = double.tryParse(rateController.text.trim());
-
-                if (symbol.isEmpty || rate == null) {
-                  scaffoldMessengerKey.currentState?.showSnackBar(
-                    SnackBar(content: Text('Invalid input')),
-                  );
-                  return;
-                }
-
-                Provider.of<AppState>(context, listen: false)
-                    .addCurrencyRate(symbol, rate);
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        );
+        return AddCurrencyDialog();
       },
     );
   }

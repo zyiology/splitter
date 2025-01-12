@@ -89,7 +89,12 @@ class _AddTransactionGroupDialogState extends State<AddTransactionGroupDialog> {
       print('added transaction group');
 
       // add the currency to the currency rates and update the current transaction group
-      CurrencyRate currRate = await widget.appState.addCurrencyRate(currency, 1.0, groupId:addedGroup.id);
+      CurrencyRate? currRate = await widget.appState.addCurrencyRate(currency, 1.0, groupId:addedGroup.id);
+
+      if (currRate == null) {
+        throw 'Failed to add currency rate';
+      }
+
       print('added currency rate');
       addedGroup = addedGroup.copyWith(defaultCurrencyId: currRate.id);
       

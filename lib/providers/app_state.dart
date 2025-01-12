@@ -365,12 +365,13 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<bool> removeParticipant(String id) async {
+  Future<bool> removeParticipant(Participant participant) async {
     if (user == null) return false;
 
     // check if participant is currently being used in any transactions
     for (var transaction in transactions) {
-      if (transaction.payer == id || transaction.payees.contains(id)) {
+      print('Checking transaction. Payer: ${transaction.payer}, Payees: ${transaction.payees}');
+      if (transaction.payer == participant.name || transaction.payees.contains(participant.name)) {
         return false;
       }
     }
@@ -379,7 +380,7 @@ class AppState extends ChangeNotifier {
       .collection('transaction_groups')
       .doc(_currentTransactionGroup!.id)
       .collection('participants')
-      .doc(id)
+      .doc(participant.id)
       .delete();
     
     return true;
@@ -390,7 +391,12 @@ class AppState extends ChangeNotifier {
   /// [symbol] The currency symbol/code (e.g. "USD", "EUR")
   /// [rate] The exchange rate relative to the base currency
   /// [groupId] Optional transaction group ID. If not provided, uses current group
-  Future<CurrencyRate> addCurrencyRate(String symbol, double rate, {String? groupId}) async {
+  Future<CurrencyRate?> addCurrencyRate(String symbol, double rate, {String? groupId}) async {
+    // check if the currency rate already exists
+    if (currencyRates.any((c) => c.symbol == symbol)) {
+      return null;
+    }
+
     DocumentReference docRef = await firestore
       .collection('transaction_groups')
       .doc(groupId ?? _currentTransactionGroup!.id)
@@ -416,12 +422,12 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<bool> removeCurrencyRate(String id) async {
+  Future<bool> removeCurrencyRate(CurrencyRate currencyRate) async {
     if (user == null) return false;
 
     // Check if currency rate is currently being used in any transactions
     for (var transaction in transactions) {
-      if (transaction.currencySymbol == id) {
+      if (transaction.currencySymbol == currencyRate.symbol) {
         return false;
       }
     }
@@ -430,7 +436,7 @@ class AppState extends ChangeNotifier {
       .collection('transaction_groups')
       .doc(_currentTransactionGroup!.id)
       .collection('currency_rates')
-      .doc(id)
+      .doc(currencyRate.id)
       .delete();
 
     return true;

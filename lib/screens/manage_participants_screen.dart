@@ -54,8 +54,8 @@ class _ManageParticipantsScreenState extends State<ManageParticipantsScreen> {
                   trailing: IconButton(
                     icon: Icon(Icons.delete, color: Colors.red),
                     onPressed: () async {
-                      print('going to delete $participant');
-                      bool success = await appState.removeParticipant(participant.id!);
+                      print('going to delete ${participant.name}. id: ${participant.id}');
+                      bool success = await appState.removeParticipant(participant);
                       if (!success) {
                         scaffoldMessengerKey.currentState?.showSnackBar(
                             SnackBar(
