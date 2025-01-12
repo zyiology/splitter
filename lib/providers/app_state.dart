@@ -425,6 +425,11 @@ class AppState extends ChangeNotifier {
   Future<bool> removeCurrencyRate(CurrencyRate currencyRate) async {
     if (user == null) return false;
 
+    // Check if currency is default currency
+    if (_currentTransactionGroup!.defaultCurrencyId == currencyRate.id) {
+      return false;
+    }
+
     // Check if currency rate is currently being used in any transactions
     for (var transaction in transactions) {
       if (transaction.currencySymbol == currencyRate.symbol) {

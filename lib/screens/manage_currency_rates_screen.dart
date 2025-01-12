@@ -149,7 +149,7 @@ class _ManageCurrencyRatesScreenState extends State<ManageCurrencyRatesScreen> {
       scaffoldMessengerKey.currentState?.showSnackBar(
         SnackBar(
             content: Text(
-                '${currencyRate.symbol} is currently used in transactions and cannot be removed.')),
+                '${currencyRate.symbol} is the default currency rate, or is currently used in transactions. It cannot be removed.')),
       );
     }
   }
