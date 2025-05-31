@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.zhiyi.splitter",
+      "sha256_cert_fingerprints": [
+        "23:A6:75:97:F8:93:DE:EF:44:1D:D8:F5:DE:32:F5:E0:DD:C8:69:84:2E:71:F4:1B:9B:F4:79:57:A4:BF:D2:DA",
+        "DB:86:C0:77:99:F7:70:35:C9:11:69:CC:7B:76:B5:A0:63:EC:FB:3E:E1:FF:65:A2:2D:7E:55:74:D1:6E:60:1C"
+      ]
+    }
+  }
+]
