@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:splitter/screens/home_screen.dart';
 import '../providers/app_state.dart';
 import 'add_transaction_screen.dart';
@@ -183,21 +184,31 @@ class TransactionGroupScreen extends StatelessWidget {
               icon: Icon(Icons.share),
               tooltip: 'Share',
               onPressed: () async {
-                // Copy the transaction group inviteToken to the clipboard
-                final inviteToken = appState.currentTransactionGroup!.inviteToken;
                 final messenger = ScaffoldMessenger.of(context); // Capture before async call
-                try {
-                  await Clipboard.setData(ClipboardData(text: inviteToken));
+                final inviteToken = appState.currentTransactionGroup?.inviteToken;
+                if (inviteToken == null || inviteToken.isEmpty) {
                   messenger.showSnackBar(
                     SnackBar(
-                      content: Text('Invite token copied to clipboard'),
+                      content: Text('Invite token is not available.'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  return;
+                }
+                String appLink = "https://splitter-2e1ae.web.app/join?token=$inviteToken";
+                try {
+                  await Share.share('Join my transaction group on Splitter! $appLink');
+                  // Optionally, if you still want a SnackBar confirmation:
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text('Share dialog initiated.'),
                       duration: Duration(seconds: 2),
                     ),
                   );
                 } catch (error) {
                   messenger.showSnackBar(
                     SnackBar(
-                      content: Text('Failed to copy invite token'),
+                      content: Text('Failed to initiate share: $error'),
                       duration: Duration(seconds: 2),
                     ),
                   );
