@@ -1,0 +1,239 @@
+<!-- public/join/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Open Splitter App</title>
+  <!-- 
+    You can customize styles below or link to your own CSS.
+    Right now this is a minimal inlined style for centering content.
+  -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 2rem;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    h1 {
+      margin-bottom: 1rem;
+    }
+    p {
+      margin: 0.5rem 0;
+    }
+    a.button {
+      display: inline-block;
+      margin: 1rem auto;
+      padding: 0.75rem 1.5rem;
+      text-decoration: none;
+      background-color: #1e88e5;
+      color: white;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    a.button:hover {
+      background-color: #1565c0;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Open Splitter</h1>
+  <p>
+    If you have the Splitter app installed, tapping “Open App” will launch it.  
+    Otherwise, you can install it from the appropriate store.
+  </p>
+
+  <!-- 
+    These two links/buttons will be wired up in JavaScript to:
+      • "openAppLink" → try to launch the native app
+      • "storeLink"   → go to Google Play (Android) or App Store (iOS)
+  -->
+  <p>
+    <a id="openAppLink" class="button" href="#">
+      ⌛ Opening App…
+    </a>
+  </p>
+  <p>
+    <a id="storeLink" class="button" href="#">
+      📲 Get the App
+    </a>
+  </p>
+
+  <!-- 
+    ----------------------------------------------------------
+    FUTURE JAVASCRIPT (to insert below) will do the following:
+      
+      1) Read `token` from the query string (e.g. ?token=abc123).
+      2) Detect platform (Android vs. iOS vs. desktop).
+      3) Build an "intent://" URI (Android) or use an iOS Universal Link.
+      4) Set `openAppLink.href` to that URI so that, if clicked,
+         Android/iOS will attempt to open the app directly.
+      5) Set `storeLink.href` to the correct store URL:
+            • Android → https://play.google.com/store/apps/details?id=com.example.splitter
+            • iOS     → https://apps.apple.com/app/id<YOUR_APPLE_ID>
+      6) Optionally, auto‐redirect on page load (e.g. window.location = intentURI).
+    ----------------------------------------------------------
+  -->
+  <script>
+    // ──────────────────────────────────────────────────────────
+    // 1) PARSE TOKEN (from ?token=…)
+    // ──────────────────────────────────────────────────────────
+    // Example:
+    //   const params = new URLSearchParams(window.location.search);
+    //   const token = params.get('token') || '';
+    //
+    // You will later use this `token` to pass into your Intent or Universal Link.
+
+    // const params = new URLSearchParams(window.location.search);
+    // const token = params.get('token') || '';
+
+    // ──────────────────────────────────────────────────────────
+    // 2) DETECT PLATFORM
+    // ──────────────────────────────────────────────────────────
+    // Example:
+    //   const ua = navigator.userAgent || '';
+    //   const isAndroid = /Android/i.test(ua);
+    //   const isIOS = /iPhone|iPad|iPod/i.test(ua);
+    //   const isDesktop = !isAndroid && !isIOS;
+    //
+    // Use this to decide which URI to build and where to send "Get the App".
+
+    // const ua = navigator.userAgent || '';
+    // const isAndroid = /Android/i.test(ua);
+    // const isIOS = /iPhone|iPad|iPod/i.test(ua);
+    // const isDesktop = !isAndroid && !isIOS;
+
+    // ──────────────────────────────────────────────────────────
+    // 3) BUILD THE NATIVE-APP LINK (ANDROID INTENT / iOS UNIVERSAL LINK)
+    // ──────────────────────────────────────────────────────────
+    // Example for Android Intent URI (replace com.example.splitter with your package name):
+    //
+    //   const androidIntent =
+    //     `intent://join?token=${token}#Intent;` +
+    //     `scheme=https;` +
+    //     `package=com.example.splitter;` +
+    //     // A fallback if the app is NOT installed:
+    //     `S.browser_fallback_url=` +
+    //       encodeURIComponent(
+    //         'https://play.google.com/store/apps/details?id=com.example.splitter'
+    //       ) +
+    //     `;end;`;
+    //
+    // Example for iOS Universal Link (assuming you configure apple-app-site-association):
+    //
+    //   const iosUniversal = `https://splitter-2e1ae.web.app/join?token=${token}`;
+    //
+    // (Your iOS app’s Associated Domains entry must include “applinks:splitter-2e1ae.web.app”.)
+
+    // const androidIntent = `intent://join?token=${token}#Intent;` +
+    //   `scheme=https;` +
+    //   `package=com.example.splitter;` +
+    //   `S.browser_fallback_url=` +
+    //     encodeURIComponent(
+    //       'https://play.google.com/store/apps/details?id=com.example.splitter'
+    //     ) +
+    //   `;end;`;
+
+    // const iosUniversal = `https://splitter-2e1ae.web.app/join?token=${token}`;
+
+    // ──────────────────────────────────────────────────────────
+    // 4) ASSIGN LINKS TO THE BUTTONS
+    // ──────────────────────────────────────────────────────────
+    // Example:
+    //
+    //   if (isAndroid) {
+    //     document.getElementById('openAppLink').href = androidIntent;
+    //     document.getElementById('storeLink').href =
+    //       'https://play.google.com/store/apps/details?id=com.example.splitter';
+    //   } else if (isIOS) {
+    //     document.getElementById('openAppLink').href = iosUniversal;
+    //     document.getElementById('storeLink').href =
+    //       'https://apps.apple.com/app/id<YOUR_APPLE_ID>';
+    //   } else {
+    //     // Desktop: maybe show both store links or a generic “Download” page
+    //     document.getElementById('openAppLink').style.display = 'none';
+    //     document.getElementById('storeLink').href =
+    //       'https://play.google.com/store/apps/details?id=com.example.splitter';
+    //     // Or show a small landing page with both “Play Store” & “App Store” links:
+    //     //   document.getElementById('storeLink').innerText = 'Download on Play or App Store';
+    //   }
+    //
+    // ──────────────────────────────────────────────────────────
+    // 5) OPTIONAL: AUTO-REDIRECT ON PAGE LOAD
+    // ──────────────────────────────────────────────────────────
+    // If you want the user to be redirected immediately (instead of clicking “Open App”):
+    //
+    //   if (isAndroid) {
+    //     window.location.href = androidIntent;
+    //   } else if (isIOS) {
+    //     window.location.href = iosUniversal;
+    //   }
+    //
+    // Note: some browsers prevent auto‐redirects from JS. In that case, the user
+    // may have to tap “Open App” manually.
+
+    // ──────────────────────────────────────────────────────────
+    // PUT IT ALL TOGETHER (UNCOMMENT WHEN READY)
+    // ──────────────────────────────────────────────────────────
+    /*
+    (function() {
+      // 1) Parse the token
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token') || '';
+
+      // 2) Detect platform
+      const ua = navigator.userAgent || '';
+      const isAndroid = /Android/i.test(ua);
+      const isIOS = /iPhone|iPad|iPod/i.test(ua);
+      const isDesktop = !isAndroid && !isIOS;
+
+      // 3) Build URIs
+      const androidIntent =
+        `intent://join?token=${token}#Intent;` +
+        `scheme=https;` +
+        `package=com.example.splitter;` +
+        `S.browser_fallback_url=` +
+          encodeURIComponent(
+            'https://play.google.com/store/apps/details?id=com.example.splitter'
+          ) +
+        `;end;`;
+      const iosUniversal = `https://splitter-2e1ae.web.app/join?token=${token}`;
+
+      // 4) Assign to buttons
+      const openAppBtn = document.getElementById('openAppLink');
+      const storeBtn = document.getElementById('storeLink');
+
+      if (isAndroid) {
+        openAppBtn.href = androidIntent;
+        openAppBtn.innerText = 'Open in Android App';
+        storeBtn.href = 'https://play.google.com/store/apps/details?id=com.example.splitter';
+        storeBtn.innerText = 'Get on Google Play';
+      } else if (isIOS) {
+        openAppBtn.href = iosUniversal;
+        openAppBtn.innerText = 'Open in iOS App';
+        storeBtn.href = 'https://apps.apple.com/app/id<YOUR_APPLE_ID>';
+        storeBtn.innerText = 'Get on App Store';
+      } else {
+        // Desktop fallback: hide “Open App” button (optional)
+        openAppBtn.style.display = 'none';
+        storeBtn.href = 'https://play.google.com/store/apps/details?id=com.example.splitter';
+        storeBtn.innerText = 'Get on Google Play';
+      }
+
+      // 5) Optional auto-redirect (uncomment if you want it)
+      // if (isAndroid) {
+      //   window.location.href = androidIntent;
+      // } else if (isIOS) {
+      //   window.location.href = iosUniversal;
+      // }
+    })();
+    */
+  </script>
+  <!-- END OF SCRIPT -->
+</body>
+</html>

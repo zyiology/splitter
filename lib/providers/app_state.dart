@@ -1,5 +1,6 @@
 // lib/providers/app_state.dart
 import 'package:flutter/material.dart';
+import 'package:splitter/main.dart'; // Import for scaffoldMessengerKey
 import 'package:splitter/models/participant.dart';
 import 'package:splitter/models/public_profile.dart';
 import 'dart:async';
@@ -20,6 +21,11 @@ class AppState extends ChangeNotifier {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
   final List<StreamSubscription> _subscriptions = [];
+  
+  // Connection state tracking
+  bool _isOnline = true;
+  bool get isOnline => _isOnline;
+  String? pendingInviteToken;
   
   // cache for public profiles, to save on Firestore reads
   final Map<String, PublicProfile> _publicProfileCache = {};
@@ -225,6 +231,29 @@ class AppState extends ChangeNotifier {
       //       .doc(user.uid) // use the user's uid as the document ID
       //       .set(publicProfile.toMap());
 
+      if (pendingInviteToken != null && pendingInviteToken!.isNotEmpty) {
+        print('Pending invite token found: $pendingInviteToken');
+        try {
+          bool success = await joinTransactionGroup(pendingInviteToken!);
+          if (success) {
+            scaffoldMessengerKey.currentState?.showSnackBar(
+              SnackBar(content: Text('Successfully joined group via link!')),
+            );
+          } else {
+            scaffoldMessengerKey.currentState?.showSnackBar(
+              SnackBar(content: Text('Failed to join group via link. The token might be invalid or expired.')),
+            );
+          }
+        } catch (e) {
+          print('Error processing pending invite token: $e');
+          scaffoldMessengerKey.currentState?.showSnackBar(
+            SnackBar(content: Text('An error occurred while trying to join the group.')),
+          );
+        } finally {
+          pendingInviteToken = null;
+        }
+      }
+
       isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -303,6 +332,7 @@ class AppState extends ChangeNotifier {
   Future<void> signOut() async {
     await _auth.signOut();
     await _googleSignIn.signOut();
+    pendingInviteToken = null;
     // Clear any additional state if needed
     notifyListeners();
   }

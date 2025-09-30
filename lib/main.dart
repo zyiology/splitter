@@ -1,9 +1,8 @@
 // lib/main.dart
 import 'dart:async'; // Required for StreamSubscription
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Required for PlatformException
 import 'package:provider/provider.dart';
-import 'package:uni_links/uni_links.dart';
+import 'package:app_links/app_links.dart';
 import 'providers/app_state.dart';
 import 'screens/home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -41,7 +40,7 @@ class _AppWithLinkHandlerState extends State<AppWithLinkHandler> {
   @override
   void initState() {
     super.initState();
-    _initUniLinks();
+    _initAppLinks();
   }
 
   @override
@@ -50,31 +49,18 @@ class _AppWithLinkHandlerState extends State<AppWithLinkHandler> {
     super.dispose();
   }
 
-  Future<void> _initUniLinks() async {
-    try {
-      final initialUri = await getInitialUri();
-      if (initialUri != null) {
-        _handleLink(context, initialUri);
-      }
-    } on PlatformException {
-      // Platform messages may fail, so we use a try/catch PlatformException.
-      print("Failed to get initial link.");
-    } on FormatException {
-      print("Failed to parse initial link.");
-    }
-
-    _sub = uriLinkStream.listen((Uri? uri) {
-      if (uri != null) {
-        _handleLink(context, uri);
-      }
+  Future<void> _initAppLinks() async {
+    final appLinks = AppLinks();
+    
+    // Handle the app link stream
+    _sub = appLinks.uriLinkStream.listen((Uri uri) {
+      _handleLink(context, uri);
     }, onError: (err) {
-      print('uriLinkStream error: $err');
+      print('App links stream error: $err');
     });
   }
 
-  void _handleLink(BuildContext context, Uri? link) {
-    if (link == null) return;
-
+  Future<void> _handleLink(BuildContext context, Uri link) async {
     print("Handling link: $link");
     if (link.scheme == 'https' &&
         link.host == 'splitter-2e1ae.web.app' &&
@@ -83,17 +69,37 @@ class _AppWithLinkHandlerState extends State<AppWithLinkHandler> {
       final token = link.queryParameters['token'];
       if (token != null && token.isNotEmpty) {
         print("Extracted token: $token");
-        try {
-          final appState = Provider.of<AppState>(context, listen: false);
-          appState.joinTransactionGroup(token);
+        final appState = Provider.of<AppState>(context, listen: false);
+
+        if (appState.user == null) {
+          // User is not logged in
+          appState.pendingInviteToken = token;
           scaffoldMessengerKey.currentState?.showSnackBar(
-            SnackBar(content: Text('Joining group with token: $token')),
+            SnackBar(content: Text('Please sign in to join the group.')),
           );
-        } catch (e) {
-          print("Error joining group from link: $e");
-          scaffoldMessengerKey.currentState?.showSnackBar(
-            SnackBar(content: Text('Error joining group: ${e.toString()}')),
-          );
+          // Assuming your app navigates to SignInScreen automatically when user is null
+          // or by listening to appState.user changes elsewhere.
+          print("User not logged in. Stored pending token. Sign-in required.");
+        } else {
+          // User is logged in
+          print("User logged in. Attempting to join group directly.");
+          try {
+            bool success = await appState.joinTransactionGroup(token);
+            if (success) {
+              scaffoldMessengerKey.currentState?.showSnackBar(
+                SnackBar(content: Text('Successfully joined group with token: $token')),
+              );
+            } else {
+              scaffoldMessengerKey.currentState?.showSnackBar(
+                SnackBar(content: Text('Failed to join group with token: $token')),
+              );
+            }
+          } catch (e) {
+            print("Error joining group from link: $e");
+            scaffoldMessengerKey.currentState?.showSnackBar(
+              SnackBar(content: Text('Error joining group: ${e.toString()}')),
+            );
+          }
         }
       } else {
         print("Token not found in link");
