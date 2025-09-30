@@ -53,3 +53,4 @@ lib/firebase_options.dart
 
 .env
 .todo
+.vscode/
