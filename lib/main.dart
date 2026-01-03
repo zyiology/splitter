@@ -6,6 +6,7 @@ import 'package:app_links/app_links.dart';
 import 'providers/app_state.dart';
 import 'screens/home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
@@ -18,6 +19,11 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    
+    // Enable Firestore offline persistence
+    FirebaseFirestore.instance.settings = const Settings(persistenceEnabled: true);
+    print("Firestore offline persistence enabled");
+    
     runApp(
       ChangeNotifierProvider(
         create: (_) => AppState(),

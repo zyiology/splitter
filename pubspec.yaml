@@ -43,6 +43,8 @@ dependencies:
   uuid: ^4.2.2
   cloud_functions: ^5.2.0
   app_links: ^6.4.0
+  connectivity_plus: ^6.1.5
+  shared_preferences: ^2.5.3
   
 
 dev_dependencies:

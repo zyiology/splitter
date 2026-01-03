@@ -8,6 +8,7 @@ class SplitterTransaction {
   final String currencySymbol;
   final double? tax;
   final double? serviceCharge;
+  final bool isPending; // For offline operations
 
   SplitterTransaction({
     this.id,
@@ -17,6 +18,7 @@ class SplitterTransaction {
     required this.currencySymbol,
     this.tax = 0.0,
     this.serviceCharge = 0.0,
+    this.isPending = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -40,6 +42,29 @@ class SplitterTransaction {
       currencySymbol: map['currency'],
       tax: (map['tax'] != null) ? (map['tax'] as num).toDouble() : 0.0,
       serviceCharge: (map['serviceCharge'] != null) ? (map['serviceCharge'] as num).toDouble() : 0.0,
+      isPending: false, // Firestore data is never pending
+    );
+  }
+
+  SplitterTransaction copyWith({
+    String? id,
+    double? amount,
+    String? payer,
+    List<String>? payees,
+    String? currencySymbol,
+    double? tax,
+    double? serviceCharge,
+    bool? isPending,
+  }) {
+    return SplitterTransaction(
+      id: id ?? this.id,
+      amount: amount ?? this.amount,
+      payer: payer ?? this.payer,
+      payees: payees ?? this.payees,
+      currencySymbol: currencySymbol ?? this.currencySymbol,
+      tax: tax ?? this.tax,
+      serviceCharge: serviceCharge ?? this.serviceCharge,
+      isPending: isPending ?? this.isPending,
     );
   }
 }

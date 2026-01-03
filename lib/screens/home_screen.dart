@@ -37,7 +37,21 @@ class _HomeScreenState extends State<HomeScreen> {
         return Scaffold(
           appBar: AppBar(
             title: Text('Transaction Group List'),
+            backgroundColor: appState.isOnline ? null : Colors.orange,
             actions: [
+              if (!appState.isOnline)
+                Padding(
+                  padding: EdgeInsets.only(right: 8.0),
+                  child: Icon(Icons.cloud_off, color: Colors.white),
+                ),
+              if (appState.hasPendingOperations)
+                Padding(
+                  padding: EdgeInsets.only(right: 8.0),
+                  child: Badge(
+                    label: Text('${appState.pendingOperationsCount}'),
+                    child: Icon(Icons.sync, color: Colors.white),
+                  ),
+                ),
               IconButton(
                 icon: Icon(Icons.logout),
                 onPressed: () {
@@ -79,6 +93,38 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           body: Column(
             children: [
+              if (!appState.isOnline)
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(8.0),
+                  color: Colors.orange,
+                  child: Row(
+                    children: [
+                      Icon(Icons.cloud_off, color: Colors.white, size: 16),
+                      SizedBox(width: 8),
+                      Text(
+                        'Offline - Only additions allowed',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              if (appState.hasPendingOperations)
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(8.0),
+                  color: Colors.blue,
+                  child: Row(
+                    children: [
+                      Icon(Icons.sync, color: Colors.white, size: 16),
+                      SizedBox(width: 8),
+                      Text(
+                        '${appState.pendingOperationsCount} operations pending sync',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
               Expanded(
                 child: _buildTransactionGroupsList(appState)
               ),

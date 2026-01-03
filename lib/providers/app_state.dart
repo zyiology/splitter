@@ -8,10 +8,13 @@ import '../models/transaction.dart';
 import '../models/currency_rate.dart';
 import "../models/transaction_group.dart";
 import '../services/settlement_service.dart';
+import '../services/offline_queue_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+
 
 import '../utils/input_utils.dart';
 
@@ -21,10 +24,12 @@ class AppState extends ChangeNotifier {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
   final List<StreamSubscription> _subscriptions = [];
+  final OfflineQueueService _offlineQueueService = OfflineQueueService();
   
   // Connection state tracking
   bool _isOnline = true;
   bool get isOnline => _isOnline;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   String? pendingInviteToken;
   
   // cache for public profiles, to save on Firestore reads
@@ -48,6 +53,10 @@ class AppState extends ChangeNotifier {
     _initialize();
   }
 
+  // Getter for pending operations count (for UI indicators)
+  int get pendingOperationsCount => _offlineQueueService.pendingOperations.length;
+  bool get hasPendingOperations => _offlineQueueService.hasPendingOperations;
+
   void updateCurrentTransactionGroup(SplitterTransactionGroup transactionGroup) {
     print('Updating current transaction group: ${transactionGroup.id}');
     // Cancel existing subscriptions
@@ -62,6 +71,12 @@ class AppState extends ChangeNotifier {
 
   Future<void> _initialize() async {
     print('Initializing AppState...');
+
+    // Initialize offline queue service
+    await _offlineQueueService.initialize();
+    
+    // Initialize connectivity monitoring
+    await _initConnectivityMonitoring();
 
     // have to handle initial state else there's a race condition?
     User? currentUser = _auth.currentUser;
@@ -89,6 +104,52 @@ class AppState extends ChangeNotifier {
     
     isLoading = false;
     notifyListeners();
+  }
+
+  Future<void> _initConnectivityMonitoring() async {
+    // Check initial connectivity state
+    final connectivityResults = await Connectivity().checkConnectivity();
+    _isOnline = !connectivityResults.contains(ConnectivityResult.none);
+    
+    // Listen for connectivity changes
+    _connectivitySubscription = Connectivity()
+        .onConnectivityChanged
+        .listen((List<ConnectivityResult> results) async {
+      bool wasOnline = _isOnline;
+      _isOnline = !results.contains(ConnectivityResult.none);
+      
+      print('Connectivity changed: ${results.map((r) => r.name).join(', ')}, isOnline: $_isOnline');
+      
+      if (!wasOnline && _isOnline) {
+        print('Connection restored, processing offline queue...');
+        await _onConnectionRestored();
+      }
+      
+      notifyListeners();
+    });
+  }
+
+  Future<void> _onConnectionRestored() async {
+    try {
+      await _processOfflineQueue();
+      
+      if (_offlineQueueService.hasPendingOperations) {
+        scaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(
+            content: Text('${_offlineQueueService.pendingOperations.length} offline operations synced successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error processing offline queue: $e');
+      scaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text('Some offline operations failed to sync'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
   }
 
   void _listenTransactionGroups() {
@@ -385,18 +446,56 @@ class AppState extends ChangeNotifier {
     // sanitize the input
     name = InputUtils.sanitizeString(name);
 
-    if (!participants.contains(name.toLowerCase()) && user != null) {
+    if (participants.any((p) => p.name == name.toLowerCase()) || user == null) {
+      return; // Participant already exists or user not logged in
+    }
+
+    final participantData = {'name': name.toLowerCase()};
+
+    try {
+      // Always try online first
       await firestore
-        .collection('transaction_groups')
-        .doc(_currentTransactionGroup!.id)
-        .collection('participants').add({
-        'name': name.toLowerCase()
-      });
+          .collection('transaction_groups')
+          .doc(_currentTransactionGroup!.id)
+          .collection('participants')
+          .add(participantData);
+    } catch (e) {
+      // If it fails due to network issues, queue for later
+      if (e is FirebaseException && 
+          (e.code == 'unavailable' || e.code == 'deadline-exceeded' || e.code == 'permission-denied')) {
+        
+        final operationId = await _offlineQueueService.createOperationId();
+        final operation = OfflineOperation(
+          id: operationId,
+          type: 'add_participant',
+          groupId: _currentTransactionGroup!.id!,
+          data: participantData,
+          timestamp: DateTime.now(),
+        );
+        
+        await _offlineQueueService.queueOperation(operation);
+        
+        // Add to local state for immediate UI feedback
+        final tempParticipant = Participant(id: operationId, name: name.toLowerCase(), isPending: true);
+        participants.add(tempParticipant);
+        notifyListeners();
+        
+        scaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(
+            content: Text('Participant saved offline. Will sync when connection is restored.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        
+        return;
+      }
+      // Re-throw other errors
+      rethrow;
     }
   }
 
   Future<bool> removeParticipant(Participant participant) async {
-    if (user == null) return false;
+    if (user == null || !canModifyData()) return false;
 
     // check if participant is currently being used in any transactions
     for (var transaction in transactions) {
@@ -407,11 +506,11 @@ class AppState extends ChangeNotifier {
     }
 
     await firestore
-      .collection('transaction_groups')
-      .doc(_currentTransactionGroup!.id)
-      .collection('participants')
-      .doc(participant.id)
-      .delete();
+        .collection('transaction_groups')
+        .doc(_currentTransactionGroup!.id)
+        .collection('participants')
+        .doc(participant.id)
+        .delete();
     
     return true;
   }
@@ -427,24 +526,64 @@ class AppState extends ChangeNotifier {
       return null;
     }
 
-    DocumentReference docRef = await firestore
-      .collection('transaction_groups')
-      .doc(groupId ?? _currentTransactionGroup!.id)
-      .collection('currency_rates')
-      .add({'symbol': symbol, 'rate': rate});
+    final currencyData = {'symbol': symbol, 'rate': rate};
+    final targetGroupId = groupId ?? _currentTransactionGroup!.id!;
 
-    DocumentSnapshot doc = await docRef.get();
-    return CurrencyRate.fromFirestore(doc);
+    try {
+      // Always try online first
+      DocumentReference docRef = await firestore
+          .collection('transaction_groups')
+          .doc(targetGroupId)
+          .collection('currency_rates')
+          .add(currencyData);
+
+      DocumentSnapshot doc = await docRef.get();
+      return CurrencyRate.fromFirestore(doc);
+    } catch (e) {
+      // If it fails due to network issues, queue for later
+      if (e is FirebaseException && 
+          (e.code == 'unavailable' || e.code == 'deadline-exceeded' || e.code == 'permission-denied')) {
+        
+        final operationId = await _offlineQueueService.createOperationId();
+        final operation = OfflineOperation(
+          id: operationId,
+          type: 'add_currency_rate',
+          groupId: targetGroupId,
+          data: currencyData,
+          timestamp: DateTime.now(),
+        );
+        
+        await _offlineQueueService.queueOperation(operation);
+        
+        // Add to local state for immediate UI feedback
+        final tempCurrencyRate = CurrencyRate(id: operationId, symbol: symbol, rate: rate);
+        currencyRates.add(tempCurrencyRate);
+        notifyListeners();
+        
+        scaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(
+            content: Text('Currency rate saved offline. Will sync when connection is restored.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        
+        return tempCurrencyRate;
+      }
+      // Re-throw other errors
+      rethrow;
+    }
   }
 
   Future<bool> updateCurrencyRate(String id, double rate) async {
+    if (!canModifyData()) return false;
+    
     try {
       await firestore
-        .collection('transaction_groups')
-        .doc(_currentTransactionGroup!.id)
-        .collection('currency_rates')
-        .doc(id)
-        .update({'rate': rate});
+          .collection('transaction_groups')
+          .doc(_currentTransactionGroup!.id)
+          .collection('currency_rates')
+          .doc(id)
+          .update({'rate': rate});
       return true;
     } catch (e) {
       print('Error updating currency rate: $e');
@@ -453,7 +592,7 @@ class AppState extends ChangeNotifier {
   }
 
   Future<bool> removeCurrencyRate(CurrencyRate currencyRate) async {
-    if (user == null) return false;
+    if (user == null || !canModifyData()) return false;
 
     // Check if currency is default currency
     if (_currentTransactionGroup!.defaultCurrencyId == currencyRate.id) {
@@ -468,11 +607,11 @@ class AppState extends ChangeNotifier {
     }
 
     await firestore
-      .collection('transaction_groups')
-      .doc(_currentTransactionGroup!.id)
-      .collection('currency_rates')
-      .doc(currencyRate.id)
-      .delete();
+        .collection('transaction_groups')
+        .doc(_currentTransactionGroup!.id)
+        .collection('currency_rates')
+        .doc(currencyRate.id)
+        .delete();
 
     return true;
   }
@@ -493,27 +632,113 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  // Process offline operations queue
+  Future<void> _processOfflineQueue() async {
+    final operationsToProcess = await _offlineQueueService.getOperationsToProcess();
+    
+    for (final operation in operationsToProcess) {
+      try {
+        await _executeOfflineOperation(operation);
+        await _offlineQueueService.removeOperation(operation.id);
+        print('Successfully processed offline operation: ${operation.type}');
+      } catch (e) {
+        print('Failed to process offline operation ${operation.id}: $e');
+        await _offlineQueueService.incrementRetryCount(operation.id);
+        
+        if (operation.retryCount >= 2) { // Will be 3 after increment
+          print('Operation ${operation.id} exceeded max retries, will be removed');
+        }
+      }
+    }
+    
+    // Clean up failed operations
+    await _offlineQueueService.clearFailedOperations();
+    notifyListeners();
+  }
+
+  Future<void> _executeOfflineOperation(OfflineOperation operation) async {
+    switch (operation.type) {
+      case 'add_transaction':
+        await firestore
+            .collection('transaction_groups')
+            .doc(operation.groupId)
+            .collection('transactions')
+            .add(operation.data);
+        break;
+      case 'add_participant':
+        await firestore
+            .collection('transaction_groups')
+            .doc(operation.groupId)
+            .collection('participants')
+            .add(operation.data);
+        break;
+      case 'add_currency_rate':
+        await firestore
+            .collection('transaction_groups')
+            .doc(operation.groupId)
+            .collection('currency_rates')
+            .add(operation.data);
+        break;
+      default:
+        throw Exception('Unknown operation type: ${operation.type}');
+    }
+  }
+
   // Transactions
   Future<String> addTransaction(SplitterTransaction transaction) async {
-    // await firestore.collection('transactions').add(transaction.toMap());
-    DocumentReference docRef = await firestore
-      .collection('transaction_groups')
-      .doc(_currentTransactionGroup!.id)
-      .collection('transactions')
-      .add(transaction.toMap());
+    try {
+      // Always try online first
+      DocumentReference docRef = await firestore
+          .collection('transaction_groups')
+          .doc(_currentTransactionGroup!.id)
+          .collection('transactions')
+          .add(transaction.toMap());
 
-    String transactionId = docRef.id;
-    return transactionId;
+      return docRef.id;
+    } catch (e) {
+      // If it fails due to network issues, queue for later
+      if (e is FirebaseException && 
+          (e.code == 'unavailable' || e.code == 'deadline-exceeded' || e.code == 'permission-denied')) {
+        
+        final operationId = await _offlineQueueService.createOperationId();
+        final operation = OfflineOperation(
+          id: operationId,
+          type: 'add_transaction',
+          groupId: _currentTransactionGroup!.id!,
+          data: transaction.toMap(),
+          timestamp: DateTime.now(),
+        );
+        
+        await _offlineQueueService.queueOperation(operation);
+        
+        // Add to local state for immediate UI feedback with pending indicator
+        final tempTransaction = transaction.copyWith(id: operationId, isPending: true);
+        transactions.add(tempTransaction);
+        notifyListeners();
+        
+        scaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(
+            content: Text('Transaction saved offline. Will sync when connection is restored.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        
+        return operationId;
+      }
+      // Re-throw other errors (validation, permissions, etc.)
+      rethrow;
+    }
   }
 
   Future<void> removeTransaction(String id) async {
-    if (user == null) return;
+    if (user == null || !canModifyData()) return;
+    
     await firestore
-      .collection('transaction_groups')
-      .doc(_currentTransactionGroup!.id)
-      .collection('transactions')
-      .doc(id.toString())
-      .delete();
+        .collection('transaction_groups')
+        .doc(_currentTransactionGroup!.id)
+        .collection('transactions')
+        .doc(id.toString())
+        .delete();
   }
 
   void calculateSettlements() {
@@ -639,9 +864,24 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Helper method to check if modifications are allowed
+  bool canModifyData() {
+    if (!_isOnline) {
+      scaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text('Cannot modify data while offline. Only additions are allowed.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return false;
+    }
+    return true;
+  }
+
   @override
   void dispose() {
     _cancelAllSubscriptions();
+    _connectivitySubscription?.cancel();
     super.dispose();
   }
 }

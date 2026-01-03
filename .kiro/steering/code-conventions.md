@@ -54,4 +54,5 @@ A Flutter (Dart) mobile app for tracking and splitting group expenses, backed by
 
 * For any Firestore query, use the same collection names and field names exactly as documented. If they need to be changed, highlight the need for a schema update.
 * External dependencies beyond those already in `pubspec.yaml` or `functions/package.json` should be highlighted as needing discussion before adding.
-* When asked to come up with a plan, create a detailed and concrete plan. DO NOT implement code changes until your plan has been reviewed.
+* When asked to come up with a plan, create a detailed and concrete plan. DO NOT implement code changes until your plan has been reviewed and approved.
+* This app is in active development, and has not been released. Breaking changes are expected. DO NOT bother with backwards compatibility that compromises delivering a streamlined app.
