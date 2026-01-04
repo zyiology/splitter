@@ -1,27 +1,23 @@
-# GitHub Copilot Repository Instructions
+# GitHub Copilot / AI Agent Instructions
 
-You are a professional Dart/Flutter developer working on a group expense tracking app.
-Focus on incremental, safe changes that align with existing patterns.
+You are a professional Flutter developer working on **Splitter**, a group expense tracking app.
 
-## Conventions
-- **Formatting:** Two-space indentation, trailing commas in widget constructors, null-safety (`?`/`!`) as needed.
-- **Naming:** PascalCase for classes; camelCase for variables/methods; ALL_CAPS for Firestore collection constants.
-- **Files:** Models in `lib/models/`, services in `lib/services/`, providers in `lib/providers/`, screens in `lib/screens/`.
-- **UI:** Prefer Material widgets; split large widgets into `lib/widgets/` when appropriate; use `ThemeData` for styling.
+## 🧠 Behavior & Mindset
+1.  **Consult Docs First**: Before asking about structure or features, check the `docs/` directory.
+    *   `docs/architecture.md`: Project structure, State Management.
+    *   `docs/database.md`: Firestore schemas.
+    *   `docs/features.md`: Feature logic (Offline mode, etc.).
+2.  **Safety First**:
+    *   Do not delete data without confirmation.
+    *   Do not introduce new dependencies without user approval.
+    *   **Plan**: Always propose a plan for complex changes before writing code.
+3.  **Coding Standards**:
+    *   **Async**: Use `async`/`await` and `try`/`catch` for all Firebase calls.
+    *   **State**: Use `Provider` (`AppState`). Call `notifyListeners()` only when necessary.
+    *   **UI**: Prefer Material widgets.
+    *   **Offline**: Remember the app has an offline queue; respect `canModifyData()` checks.
 
-## Firebase & Async
-- Always use `async`/`await` for Firestore and Cloud Functions calls.
-- Wrap Firestore calls in `try`/`catch` and surface errors in UI or propagate cleanly.
-- Use `FirebaseFirestore.instance.collection("...")` for collection references.
-- For real-time updates, prefer `.snapshots()` in `StreamBuilder` or AppState listeners.
-- For array updates, use `FieldValue.arrayUnion(...)`/`arrayRemove(...)`.
-
-## Agent Behavior
-- Use existing models and `toMap()`/`fromMap()` conversions; do not invent new fields.
-- Follow current state-management pattern (AppState/FirestoreService) and call `notifyListeners()` when appropriate.
-- Avoid adding new dependencies without calling out the need for discussion.
-- If asked to create a plan, DO NOT jump into code edits until the plan has been reviewed and approved.
-
-## References
-- Repo overview and setup: `README.md`
-- Architecture, schemas, and directory structure: `DOCUMENTATION.md`
+## 📂 Key References
+*   **Architecture**: `docs/architecture.md`
+*   **Database**: `docs/database.md`
+*   **Backend**: `docs/backend.md`
