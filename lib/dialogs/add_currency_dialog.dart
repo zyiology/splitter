@@ -5,8 +5,9 @@ import '../providers/app_state.dart';
 import '../models/currency_rate.dart';
 
 class AddCurrencyDialog extends StatefulWidget {
+  const AddCurrencyDialog({super.key});
   @override
-  _AddCurrencyDialogState createState() => _AddCurrencyDialogState();
+  State<AddCurrencyDialog> createState() => _AddCurrencyDialogState();
 }
 
 class _AddCurrencyDialogState extends State<AddCurrencyDialog> {
@@ -52,7 +53,9 @@ class _AddCurrencyDialogState extends State<AddCurrencyDialog> {
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to add currency. Check if symbol already exists.')),
+        SnackBar(
+            content: Text(
+                'Failed to add currency. Check if symbol already exists.')),
       );
     }
   }
@@ -88,8 +91,7 @@ class _AddCurrencyDialogState extends State<AddCurrencyDialog> {
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(Colors.white),
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
                 )
               : Text("Add"),

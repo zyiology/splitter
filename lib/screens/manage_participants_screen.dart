@@ -5,8 +5,10 @@ import '../providers/app_state.dart';
 import '../main.dart';
 
 class ManageParticipantsScreen extends StatefulWidget {
+  const ManageParticipantsScreen({super.key});
   @override
-  _ManageParticipantsScreenState createState() => _ManageParticipantsScreenState();
+  State<ManageParticipantsScreen> createState() =>
+      _ManageParticipantsScreenState();
 }
 
 class _ManageParticipantsScreenState extends State<ManageParticipantsScreen> {
@@ -33,7 +35,8 @@ class _ManageParticipantsScreenState extends State<ManageParticipantsScreen> {
               icon: Icon(Icons.add),
               onPressed: () {
                 String name = _controller.text.trim().toLowerCase();
-                if (name.isNotEmpty && !appState.participants.any((p) => p.name == name)) {
+                if (name.isNotEmpty &&
+                    !appState.participants.any((p) => p.name == name)) {
                   appState.addParticipant(name);
                   _controller.clear();
                 } else {
@@ -54,20 +57,22 @@ class _ManageParticipantsScreenState extends State<ManageParticipantsScreen> {
                   trailing: IconButton(
                     icon: Icon(Icons.delete, color: Colors.red),
                     onPressed: () async {
-                      print('going to delete ${participant.name}. id: ${participant.id}');
-                      bool success = await appState.removeParticipant(participant);
+                      print(
+                          'going to delete ${participant.name}. id: ${participant.id}');
+                      bool success =
+                          await appState.removeParticipant(participant);
                       if (!success) {
                         scaffoldMessengerKey.currentState?.showSnackBar(
-                            SnackBar(
-                                content: Text(
-                                    'Failed to delete participant ${participant.name}. Please make sure they are not part of any transactions.')),
-                          );
+                          SnackBar(
+                              content: Text(
+                                  'Failed to delete participant ${participant.name}. Please make sure they are not part of any transactions.')),
+                        );
                       } else {
                         scaffoldMessengerKey.currentState?.showSnackBar(
-                            SnackBar(
-                                content: Text(
-                                    'Deleted participant ${participant.name}')),
-                          );
+                          SnackBar(
+                              content: Text(
+                                  'Deleted participant ${participant.name}')),
+                        );
                       }
                     },
                   ),

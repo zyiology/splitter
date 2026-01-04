@@ -3,16 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import '../models/currency_rate.dart';
-import '../dialogs/add_currency_dialog.dart'; 
+import '../dialogs/add_currency_dialog.dart';
 import '../main.dart';
 
 class ManageCurrencyRatesScreen extends StatefulWidget {
+  const ManageCurrencyRatesScreen({super.key});
   @override
-  _ManageCurrencyRatesScreenState createState() => _ManageCurrencyRatesScreenState();
+  State<ManageCurrencyRatesScreen> createState() =>
+      _ManageCurrencyRatesScreenState();
 }
 
 class _ManageCurrencyRatesScreenState extends State<ManageCurrencyRatesScreen> {
-   // To manage TextEditingControllers efficiently, use a Map to store controllers by currency ID
+  // To manage TextEditingControllers efficiently, use a Map to store controllers by currency ID
   final Map<String, TextEditingController> _controllers = {};
 
   @override
@@ -36,8 +38,7 @@ class _ManageCurrencyRatesScreenState extends State<ManageCurrencyRatesScreen> {
           final currency = appState.currencyRates[index];
 
           // Initialize controller if not already done
-          _controllers.putIfAbsent(
-              currency.id!,
+          _controllers.putIfAbsent(currency.id!,
               () => TextEditingController(text: currency.rate.toString()));
 
           final controller = _controllers[currency.id]!;
@@ -60,8 +61,8 @@ class _ManageCurrencyRatesScreenState extends State<ManageCurrencyRatesScreen> {
                       onSubmitted: (value) async {
                         double? rate = double.tryParse(value);
                         if (rate != null) {
-                          bool success =
-                              await appState.updateCurrencyRate(currency.id!, rate);
+                          bool success = await appState.updateCurrencyRate(
+                              currency.id!, rate);
                           if (!success) {
                             scaffoldMessengerKey.currentState?.showSnackBar(
                               SnackBar(
@@ -101,7 +102,8 @@ class _ManageCurrencyRatesScreenState extends State<ManageCurrencyRatesScreen> {
     );
   }
 
-  Future<void> _confirmDeletion(BuildContext context, CurrencyRate currency) async {
+  Future<void> _confirmDeletion(
+      BuildContext context, CurrencyRate currency) async {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -133,9 +135,8 @@ class _ManageCurrencyRatesScreenState extends State<ManageCurrencyRatesScreen> {
     final appState = Provider.of<AppState>(context, listen: false);
 
     bool success = await appState.removeCurrencyRate(currencyRate);
-    
-    if (success) {
 
+    if (success) {
       // Optionally, show a success message
       scaffoldMessengerKey.currentState?.showSnackBar(
         SnackBar(content: Text('${currencyRate.symbol} has been removed.')),

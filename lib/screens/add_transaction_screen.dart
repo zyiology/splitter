@@ -6,8 +6,10 @@ import '../models/transaction.dart';
 import '../utils/input_utils.dart';
 
 class AddTransactionScreen extends StatefulWidget {
+  const AddTransactionScreen({super.key});
+
   @override
-  _AddTransactionScreenState createState() => _AddTransactionScreenState();
+  State<AddTransactionScreen> createState() => _AddTransactionScreenState();
 }
 
 class _AddTransactionScreenState extends State<AddTransactionScreen> {
@@ -23,7 +25,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   bool _includeServiceCharge = false;
   double? _tax;
   double? _serviceCharge;
-  
+
   @override
   void initState() {
     super.initState();
@@ -35,7 +37,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         _serviceCharge = appState.currentTransactionGroup?.defaultServiceCharge;
 
         // Initialize currency
-        final defaultCurrencyId = appState.currentTransactionGroup?.defaultCurrencyId;
+        final defaultCurrencyId =
+            appState.currentTransactionGroup?.defaultCurrencyId;
         _currency = appState.currencyRates
             .firstWhere(
               (c) => c.id == defaultCurrencyId,
@@ -44,7 +47,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             .symbol;
 
         // Initialize payer
-        _payer = appState.participants.isNotEmpty ? appState.participants.first.name : null;
+        _payer = appState.participants.isNotEmpty
+            ? appState.participants.first.name
+            : null;
       });
     });
     // final appState = Provider.of<AppState>(context, listen: false);
@@ -64,14 +69,17 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: appState.participants.isEmpty
-            ? Center(child: Text('No participants available. Add participants first.'))
+            ? Center(
+                child:
+                    Text('No participants available. Add participants first.'))
             : Form(
                 key: _formKey,
                 child: ListView(
                   children: [
                     TextFormField(
                       decoration: InputDecoration(labelText: 'Amount'),
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          TextInputType.numberWithOptions(decimal: true),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Enter amount';
@@ -86,7 +94,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       },
                     ),
                     TextFormField(
-                      decoration: InputDecoration(labelText: 'Description (optional)'),
+                      decoration:
+                          InputDecoration(labelText: 'Description (optional)'),
                       keyboardType: TextInputType.multiline,
                       maxLines: 3,
                       onSaved: (value) {
@@ -111,7 +120,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                           _currency = value;
                         });
                       },
-                      validator: (value) => value == null ? 'Select currency' : null,
+                      validator: (value) =>
+                          value == null ? 'Select currency' : null,
                     ),
                     DropdownButtonFormField<String>(
                       decoration: InputDecoration(labelText: 'Payer'),
@@ -127,7 +137,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                           _payer = value;
                         });
                       },
-                      validator: (value) => value == null ? 'Select payer' : null,
+                      validator: (value) =>
+                          value == null ? 'Select payer' : null,
                     ),
                     SizedBox(height: 10),
                     Text('Payees'),
@@ -165,7 +176,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: TextFormField(
                           decoration: InputDecoration(labelText: 'Tax (%)'),
-                          keyboardType: TextInputType.numberWithOptions(decimal: true),
+                          keyboardType:
+                              TextInputType.numberWithOptions(decimal: true),
                           initialValue: _tax?.toString(),
                           validator: (value) {
                             if (_includeTax) {
@@ -195,7 +207,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         setState(() {
                           _includeServiceCharge = value ?? false;
                           if (_includeServiceCharge && _serviceCharge == null) {
-                            _serviceCharge = appState.currentTransactionGroup?.defaultServiceCharge;
+                            _serviceCharge = appState
+                                .currentTransactionGroup?.defaultServiceCharge;
                           }
                         });
                       },
@@ -205,8 +218,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: TextFormField(
-                          decoration: InputDecoration(labelText: 'Service Charge (%)'),
-                          keyboardType: TextInputType.numberWithOptions(decimal: true),
+                          decoration:
+                              InputDecoration(labelText: 'Service Charge (%)'),
+                          keyboardType:
+                              TextInputType.numberWithOptions(decimal: true),
                           initialValue: _serviceCharge?.toString(),
                           validator: (value) {
                             if (_includeServiceCharge) {
@@ -270,8 +285,12 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
       // sanitize inputs
       _payer = InputUtils.sanitizeString(_payer!);
-      _selectedPayees
-          .replaceRange(0, _selectedPayees.length, _selectedPayees.map((payee) => InputUtils.sanitizeString(payee)).toList());
+      _selectedPayees.replaceRange(
+          0,
+          _selectedPayees.length,
+          _selectedPayees
+              .map((payee) => InputUtils.sanitizeString(payee))
+              .toList());
       _currency = InputUtils.sanitizeString(_currency!);
       if (_description != null) {
         _description = InputUtils.sanitizeString(_description!);

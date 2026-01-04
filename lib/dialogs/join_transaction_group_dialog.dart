@@ -5,11 +5,10 @@ import '../utils/input_utils.dart';
 class JoinTransactionGroupDialog extends StatefulWidget {
   final AppState appState;
 
-  const JoinTransactionGroupDialog({Key? key, required this.appState})
-      : super(key: key);
+  const JoinTransactionGroupDialog({super.key, required this.appState});
 
   @override
-  _JoinTransactionGroupDialogState createState() =>
+  State<JoinTransactionGroupDialog> createState() =>
       _JoinTransactionGroupDialogState();
 }
 

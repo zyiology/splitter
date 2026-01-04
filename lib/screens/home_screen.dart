@@ -8,17 +8,17 @@ import '../dialogs/add_transaction_group_dialog.dart';
 import '../dialogs/join_transaction_group_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
   @override
   Widget build(BuildContext context) {
     return Consumer<AppState>(
       builder: (context, appState, child) {
-
         if (appState.isLoading) {
           return Scaffold(
             body: Center(
@@ -29,8 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
         if (appState.user == null) {
           return SignInScreen();
-        }
-        else {
+        } else {
           print("User: ${appState.user!.displayName}");
         }
 
@@ -56,25 +55,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Icon(Icons.logout),
                 onPressed: () {
                   showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text('Logout'),
-                      content: Text('Are you sure you want to logout?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            appState.signOut();
-                            Navigator.pop(context);
-                          },
-                          child: Text('Logout'),
-                        )
-                      ]
-                    )
-                  );
+                      context: context,
+                      builder: (context) => AlertDialog(
+                              title: Text('Logout'),
+                              content: Text('Are you sure you want to logout?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    appState.signOut();
+                                    Navigator.pop(context);
+                                  },
+                                  child: Text('Logout'),
+                                )
+                              ]));
                 },
               ),
               // IconButton(
@@ -84,11 +81,10 @@ class _HomeScreenState extends State<HomeScreen> {
               //   },
               // ),
               IconButton(
-                icon: Icon(Icons.add),
-                onPressed: () {
-                  _showAddTransactionGroupDialog(context, appState);
-                }
-              )
+                  icon: Icon(Icons.add),
+                  onPressed: () {
+                    _showAddTransactionGroupDialog(context, appState);
+                  })
             ],
           ),
           body: Column(
@@ -104,7 +100,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       SizedBox(width: 8),
                       Text(
                         'Offline - Only additions allowed',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -125,9 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
-              Expanded(
-                child: _buildTransactionGroupsList(appState)
-              ),
+              Expanded(child: _buildTransactionGroupsList(appState)),
               Divider(),
               Padding(
                 padding: const EdgeInsets.all(8.0),
@@ -168,78 +163,81 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showAddTransactionGroupDialog(BuildContext context, AppState appState) {
     showDialog(
       context: context,
-      barrierDismissible: false, // Prevents closing the dialog by tapping outside
-      builder: (context) => AddTransactionGroupDialog(appState: appState),
+      barrierDismissible:
+          false, // Prevents closing the dialog by tapping outside
+      builder: (context) => AddTransactionGroupDialog(),
     );
   }
 
-  void _showJoinTransactionGroupDialog(BuildContext context, AppState appState) {
+  void _showJoinTransactionGroupDialog(
+      BuildContext context, AppState appState) {
     showDialog(
       context: context,
-      barrierDismissible: false, // Prevents closing the dialog by tapping outside
+      barrierDismissible:
+          false, // Prevents closing the dialog by tapping outside
       builder: (context) => JoinTransactionGroupDialog(appState: appState),
     );
   }
-
 
   Widget _buildTransactionGroupsList(AppState appState) {
     return appState.transactionGroups.isEmpty
         ? Center(child: Text('No transaction groups added.'))
         : ListView.builder(
-          itemCount: appState.transactionGroups.length,
-          itemBuilder: (context, index) {
-            final transactionGroup = appState.transactionGroups[index];
-            return ListTile(
-              title: Text(
-                transactionGroup.groupName,
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Text('Created by: ${transactionGroup.ownerName}'),
-                  FutureBuilder<String>(
-                    future: appState.fetchUserName(transactionGroup.owner),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Text('Loading owner...');
-                      } else if (snapshot.hasError) {
-                        return Text('Error loading owner');
-                      } else {
-                        return Text('Created by: ${snapshot.data}');
-                      }
-                    },
+            itemCount: appState.transactionGroups.length,
+            itemBuilder: (context, index) {
+              final transactionGroup = appState.transactionGroups[index];
+              return ListTile(
+                  title: Text(
+                    transactionGroup.groupName,
                   ),
-                  FutureBuilder<List<String>>(
-                    future: appState.fetchUserNames(transactionGroup.sharedWith),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Text('Loading shared users...');
-                      } else if (snapshot.hasError) {
-                        return Text('Error loading shared users');
-                      } else {
-                        final sharedNames = snapshot.data!.join(', ');
-                        return Text('Shared with: $sharedNames');
-                      }
-                    },
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Text('Created by: ${transactionGroup.ownerName}'),
+                      FutureBuilder<String>(
+                        future: appState.fetchUserName(transactionGroup.owner),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return Text('Loading owner...');
+                          } else if (snapshot.hasError) {
+                            return Text('Error loading owner');
+                          } else {
+                            return Text('Created by: ${snapshot.data}');
+                          }
+                        },
+                      ),
+                      FutureBuilder<List<String>>(
+                        future: appState
+                            .fetchUserNames(transactionGroup.sharedWith),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return Text('Loading shared users...');
+                          } else if (snapshot.hasError) {
+                            return Text('Error loading shared users');
+                          } else {
+                            final sharedNames = snapshot.data!.join(', ');
+                            return Text('Shared with: $sharedNames');
+                          }
+                        },
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              trailing: IconButton(
-                icon: Icon(Icons.delete),
-                onPressed: () {
-                  appState.removeTransactionGroup(transactionGroup.id!);
-                }
-              ),
-              onTap: () {
-                appState.updateCurrentTransactionGroup(transactionGroup);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => TransactionGroupScreen()),
-                );
-              }
-            );
-          }
-        );
+                  trailing: IconButton(
+                      icon: Icon(Icons.delete),
+                      onPressed: () {
+                        appState.removeTransactionGroup(transactionGroup.id!);
+                      }),
+                  onTap: () {
+                    appState.updateCurrentTransactionGroup(transactionGroup);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => TransactionGroupScreen()),
+                    );
+                  });
+            });
   }
 
   String capitalize(String s) => s[0].toUpperCase() + s.substring(1);

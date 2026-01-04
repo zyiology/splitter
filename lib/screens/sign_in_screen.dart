@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 
 class SignInScreen extends StatelessWidget {
+  const SignInScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
