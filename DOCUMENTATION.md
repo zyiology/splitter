@@ -74,6 +74,7 @@ The application utilizes Firestore as its primary database. The data is organize
     *   `payees` (String): A comma-separated string of participant names who were involved in or benefited from this transaction.
     *   `tax` (Number): Tax amount for this transaction (defaults to 0.0).
     *   `serviceCharge` (Number): Service charge amount for this transaction (defaults to 0.0).
+    *   `description` (String, optional): A short description or comment for the transaction.
 
 ## Core Business Logic / Features
 
@@ -96,6 +97,7 @@ The application provides several key features to help users manage shared expens
     *   The currency of the transaction (selected from the group's defined currencies).
     *   The participant who paid (the "payer").
     *   The participants who benefited from or were part of the expense (the "payees").
+    *   An optional description/comment for the transaction.
     *   Optional tax and service charge amounts.
 *   **Multi-Currency Support:** Each transaction group can have multiple currencies defined, each with an exchange rate. Transactions can be recorded in any of these defined currencies. The `SettlementService` uses these rates to normalize amounts when calculating balances.
 *   **Tax and Service Charges:** Transactions can include additional tax and service charge amounts, with default values configurable at the group level.

@@ -16,6 +16,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   String? _currency;
   String? _payer;
   final List<String> _selectedPayees = [];
+  String? _description;
 
   // state variables for tax and service charge
   bool _includeTax = false;
@@ -82,6 +83,18 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       },
                       onSaved: (value) {
                         _amount = double.parse(value!);
+                      },
+                    ),
+                    TextFormField(
+                      decoration: InputDecoration(labelText: 'Description (optional)'),
+                      keyboardType: TextInputType.multiline,
+                      maxLines: 3,
+                      onSaved: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          _description = null;
+                        } else {
+                          _description = value.trim();
+                        }
                       },
                     ),
                     DropdownButtonFormField<String>(
@@ -260,6 +273,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       _selectedPayees
           .replaceRange(0, _selectedPayees.length, _selectedPayees.map((payee) => InputUtils.sanitizeString(payee)).toList());
       _currency = InputUtils.sanitizeString(_currency!);
+      if (_description != null) {
+        _description = InputUtils.sanitizeString(_description!);
+      }
       // print('adding transaction. payer: $_payer, payees: $_selectedPayees, currency: $_currency');
 
       final appState = Provider.of<AppState>(context, listen: false);
@@ -268,6 +284,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         payer: _payer!,
         payees: _selectedPayees,
         currencySymbol: _currency!,
+        description: _description,
       );
 
       // Change homescreen to also show transactions instead of settlements

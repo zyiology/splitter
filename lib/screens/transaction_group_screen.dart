@@ -57,12 +57,18 @@ class TransactionGroupScreen extends StatelessWidget {
           itemCount: appState.transactions.length,
           itemBuilder: (context, index) {
             final transaction = appState.transactions[index];
+            final description = transaction.description?.trim();
             return ListTile(
               title: Text(
                 '${transaction.payer} paid ${transaction.currencySymbol}${transaction.amount.toStringAsFixed(2)} ',
               ),
-              subtitle: Text(
-                'Payees: ${transaction.payees.join(', ')}'
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (description != null && description.isNotEmpty)
+                    Text(description),
+                  Text('Payees: ${transaction.payees.join(', ')}'),
+                ],
               ),
               trailing: IconButton(
                 icon: Icon(Icons.delete),

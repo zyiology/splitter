@@ -20,6 +20,7 @@ Focus on incremental, safe changes that align with existing patterns.
 - Use existing models and `toMap()`/`fromMap()` conversions; do not invent new fields.
 - Follow current state-management pattern (AppState/FirestoreService) and call `notifyListeners()` when appropriate.
 - Avoid adding new dependencies without calling out the need for discussion.
+- If asked to create a plan, DO NOT jump into code edits until the plan has been reviewed and approved.
 
 ## References
 - Repo overview and setup: `README.md`

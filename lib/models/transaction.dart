@@ -8,6 +8,7 @@ class SplitterTransaction {
   final String currencySymbol;
   final double? tax;
   final double? serviceCharge;
+  final String? description;
   final bool isPending; // For offline operations
 
   SplitterTransaction({
@@ -18,6 +19,7 @@ class SplitterTransaction {
     required this.currencySymbol,
     this.tax = 0.0,
     this.serviceCharge = 0.0,
+    this.description,
     this.isPending = false,
   });
 
@@ -29,6 +31,7 @@ class SplitterTransaction {
       'currency': currencySymbol,
       'tax': tax ?? 0.0,
       'serviceCharge': serviceCharge ?? 0.0,
+      'description': description,
     };
   }
 
@@ -42,6 +45,7 @@ class SplitterTransaction {
       currencySymbol: map['currency'],
       tax: (map['tax'] != null) ? (map['tax'] as num).toDouble() : 0.0,
       serviceCharge: (map['serviceCharge'] != null) ? (map['serviceCharge'] as num).toDouble() : 0.0,
+      description: map['description'],
       isPending: false, // Firestore data is never pending
     );
   }
@@ -54,6 +58,7 @@ class SplitterTransaction {
     String? currencySymbol,
     double? tax,
     double? serviceCharge,
+    String? description,
     bool? isPending,
   }) {
     return SplitterTransaction(
@@ -64,6 +69,7 @@ class SplitterTransaction {
       currencySymbol: currencySymbol ?? this.currencySymbol,
       tax: tax ?? this.tax,
       serviceCharge: serviceCharge ?? this.serviceCharge,
+      description: description ?? this.description,
       isPending: isPending ?? this.isPending,
     );
   }
