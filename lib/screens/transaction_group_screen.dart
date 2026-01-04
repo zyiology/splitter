@@ -14,7 +14,6 @@ class TransactionGroupScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AppState>(
       builder: (context, appState, child) {
-
         if (appState.currentTransactionGroup == null) {
           return HomeScreen();
         }
@@ -24,15 +23,18 @@ class TransactionGroupScreen extends StatelessWidget {
             title: Text(appState.currentTransactionGroup!.groupName),
             actions: [
               IconButton(
-                icon: Icon(appState.showTransactions ? Icons.receipt_long : Icons.calculate),
-                tooltip: appState.showTransactions ? 'Show Settlements' : 'Show Transactions',
-                onPressed: () {
-                  appState.toggleView();
-                  if (!appState.showTransactions) {
-                    appState.calculateSettlements();
-                  }
-                }
-              ),
+                  icon: Icon(appState.showTransactions
+                      ? Icons.receipt_long
+                      : Icons.calculate),
+                  tooltip: appState.showTransactions
+                      ? 'Show Settlements'
+                      : 'Show Transactions',
+                  onPressed: () {
+                    appState.toggleView();
+                    if (!appState.showTransactions) {
+                      appState.calculateSettlements();
+                    }
+                  }),
               // IconButton(
               //   icon: Icon(Icons.refresh),
               //   onPressed: () {
@@ -54,31 +56,29 @@ class TransactionGroupScreen extends StatelessWidget {
     return appState.transactions.isEmpty
         ? Center(child: Text('No transactions added.'))
         : ListView.builder(
-          itemCount: appState.transactions.length,
-          itemBuilder: (context, index) {
-            final transaction = appState.transactions[index];
-            final description = transaction.description?.trim();
-            return ListTile(
-              title: Text(
-                '${transaction.payer} paid ${transaction.currencySymbol}${transaction.amount.toStringAsFixed(2)} ',
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (description != null && description.isNotEmpty)
-                    Text(description),
-                  Text('Payees: ${transaction.payees.join(', ')}'),
-                ],
-              ),
-              trailing: IconButton(
-                icon: Icon(Icons.delete),
-                onPressed: () {
-                  appState.removeTransaction(transaction.id!);
-                }
-              ),
-            );
-          }
-        );
+            itemCount: appState.transactions.length,
+            itemBuilder: (context, index) {
+              final transaction = appState.transactions[index];
+              final description = transaction.description?.trim();
+              return ListTile(
+                title: Text(
+                  '${transaction.payer} paid ${transaction.currencySymbol}${transaction.amount.toStringAsFixed(2)} ',
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (description != null && description.isNotEmpty)
+                      Text(description),
+                    Text('Payees: ${transaction.payees.join(', ')}'),
+                  ],
+                ),
+                trailing: IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () {
+                      appState.removeTransaction(transaction.id!);
+                    }),
+              );
+            });
   }
 
   Widget _buildSettlementsList(AppState appState) {
@@ -118,7 +118,8 @@ class TransactionGroupScreen extends StatelessWidget {
                     builder: (context) {
                       return AlertDialog(
                         title: Text('No participants'),
-                        content: Text('Please add participants before adding a transaction.'),
+                        content: Text(
+                            'Please add participants before adding a transaction.'),
                         actions: [
                           TextButton(
                             onPressed: () {
@@ -190,8 +191,10 @@ class TransactionGroupScreen extends StatelessWidget {
               icon: Icon(Icons.share),
               tooltip: 'Share',
               onPressed: () async {
-                final messenger = ScaffoldMessenger.of(context); // Capture before async call
-                final inviteToken = appState.currentTransactionGroup?.inviteToken;
+                final messenger =
+                    ScaffoldMessenger.of(context); // Capture before async call
+                final inviteToken =
+                    appState.currentTransactionGroup?.inviteToken;
                 if (inviteToken == null || inviteToken.isEmpty) {
                   messenger.showSnackBar(
                     SnackBar(
@@ -201,9 +204,11 @@ class TransactionGroupScreen extends StatelessWidget {
                   );
                   return;
                 }
-                String appLink = "https://splitter-2e1ae.web.app/join?token=$inviteToken";
+                String appLink =
+                    "https://splitter-2e1ae.web.app/join?token=$inviteToken";
                 try {
-                  await Share.share('Join my transaction group on Splitter! $appLink');
+                  await SharePlus.instance.share(ShareParams(
+                      text: 'Join my transaction group on Splitter! $appLink'));
                   // Optionally, if you still want a SnackBar confirmation:
                   messenger.showSnackBar(
                     SnackBar(

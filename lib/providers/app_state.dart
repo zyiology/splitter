@@ -21,7 +21,7 @@ import '../utils/input_utils.dart';
 
 class AppState extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
   final List<StreamSubscription> _subscriptions = [];
   final OfflineQueueService _offlineQueueService = OfflineQueueService();
@@ -71,6 +71,8 @@ class AppState extends ChangeNotifier {
 
   Future<void> _initialize() async {
     print('Initializing AppState...');
+
+    await _googleSignIn.initialize();
 
     // Initialize offline queue service
     await _offlineQueueService.initialize();
@@ -246,21 +248,20 @@ class AppState extends ChangeNotifier {
       notifyListeners();
 
       // Trigger the auth flow
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
 
-      if (googleUser == null) {
+      // Obtain the auth details from the request
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
+      if (idToken == null) {
         isLoading = false;
         notifyListeners();
         return;
       }
 
-      // Obtain the auth details from the request
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
       // Create a new credential
       final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
+        idToken: idToken,
       );
 
       await _auth.signInWithCredential(credential);

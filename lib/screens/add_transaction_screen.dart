@@ -99,7 +99,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     ),
                     DropdownButtonFormField<String>(
                       decoration: InputDecoration(labelText: 'Currency'),
-                      value: _currency,
+                      initialValue: _currency,
                       items: currencies
                           .map((symbol) => DropdownMenuItem(
                                 value: symbol,
@@ -115,7 +115,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     ),
                     DropdownButtonFormField<String>(
                       decoration: InputDecoration(labelText: 'Payer'),
-                      value: _payer,
+                      initialValue: _payer,
                       items: appState.participants
                           .map((p) => DropdownMenuItem(
                                 value: p.name,
